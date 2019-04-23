@@ -119,7 +119,8 @@ namespace RedditCrawler
              -Return to main menu
              */
 
-             //set/get the file containing subreddits to moniter
+             //set the name of the file path that contains 
+             //the subreddit to moniter
              string subFilePath = "rcSubreddit.txt";           
         }
 
@@ -133,7 +134,10 @@ namespace RedditCrawler
              -If exists, modify email.
              -Return to main menu
              */
-             string emailFilePath = "rcEmail";
+
+             //set the name of the file path that contains 
+             //the information of the user
+             string emailFilePath = "rcEmail.txt";
         }
 
         //Method for initializing, changing, or adding new search criteria
@@ -148,39 +152,61 @@ namespace RedditCrawler
                 -LATER: Add option to remove specific criteria. 
              -Return to main menu
              */
+             
+             //set the name of the file path that contains 
+             //the search criteria to look for in the subreddit
              string searchCriteriaFilePath = "rcSearchCriteria.txt";
         }
 
         //Helper Methods
+        //Check if the file at the specified file path exists
+        //If it doesn't, go ahead and create one
         private void CheckFileExists(string filePath)
         {
+            //Check if the file exists at the given file path
             if(!File.Exists(path))
             {
+                //If not, create it
                 File.Create(path);
             }
         }
+
+        //Reads all of the lines from the specified file and
+        //returns a list with all of them
         private List<string> ReadFile(string filePath)
         {
+            //List to append the lines of the file to
             List<string> list = new List<string>();
+
+            //using statement to handle the StreamReader
             using (StreamReader sr = new StreamReader(filePath))
             {
-                string line = sr.ReadLine();
+                //string to hold one line from file
+                string line;
 
+                //loops through the file and ends
+                //when the end of the file is reached
                 while ((line = sr.ReadLine()) != null)
                 {
-                    list.Add(line);
+                    list.Add(line); //add line to list
                 }
             }
-            return list;
+
+            return list; //return list with appended lines
         }
 
-        private void WriteToFile(string filePath, List<string> list)
+        //By default, OVERWRITES the content of the specified file with the
+        //contents of a given list
+        //Can change it so it appends by setting append equal to true
+        private void WriteToFile(string filePath, List<string> list, bool append = false)
         {
-            using (StreamWriter sw = new StreamWriter(filePath))
+            //using statement to handle the StreamReader
+            using (StreamWriter sw = new StreamWriter(filePath, append))
             {
+                //Loop through each line in list
                 foreach(string line in list)
                 {
-                    sw.WriteLine(line);
+                    sw.WriteLine(line); //add it to the file
                 }
             }
         }
@@ -268,9 +294,9 @@ namespace RedditCrawler
                 try
                 {
                     //searchInput needs to be acquired from locally saved text file rcSearchCriteria.txt after being input, and will be used to filter the results
-                    List<string> lstSearchInput = new List<string>();
-                    //subreddit needs to be acquired from locally saved text file rcSubreddit.
-                    string subreddit = "";
+                    List<string> lstSearchInput = ReadFile("rcSearchCriteria.txt");
+                    //subreddit needs to be acquired from locally saved text file rcSubreddit.txt
+                    string subreddit = ReadFile("rcSubreddit.txt").First;
 
                     //List should also be acquired from a locally saved text file, and will consist of
                     //all previous entries the user has already been notified of. 
