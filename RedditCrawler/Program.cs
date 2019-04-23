@@ -9,6 +9,7 @@ using static RedditSharp.Things.VotableThing;
 using System.Security;
 using static System.Net.Mime.MediaTypeNames;
 using System.Net.Mail;
+using System.IO;
 
 namespace RedditCrawler
 {
@@ -117,7 +118,9 @@ namespace RedditCrawler
              -If exists, modify sub details
              -Return to main menu
              */
-             string filePath = "";
+
+             //set/get the file containing subreddits to moniter
+             string subFilePath = "rcSubreddit.txt";           
         }
 
         //Method for changing email address
@@ -130,6 +133,7 @@ namespace RedditCrawler
              -If exists, modify email.
              -Return to main menu
              */
+             string emailFilePath = "rcEmail";
         }
 
         //Method for initializing, changing, or adding new search criteria
@@ -144,7 +148,43 @@ namespace RedditCrawler
                 -LATER: Add option to remove specific criteria. 
              -Return to main menu
              */
+             string searchCriteriaFilePath = "rcSearchCriteria.txt";
         }
+
+        //Helper Methods
+        private void CheckFileExists(string filePath)
+        {
+            if(!File.Exists(path))
+            {
+                File.Create(path);
+            }
+        }
+        private List<string> ReadFile(string filePath)
+        {
+            List<string> list = new List<string>();
+            using (StreamReader sr = new StreamReader(filePath))
+            {
+                string line = sr.ReadLine();
+
+                while ((line = sr.ReadLine()) != null)
+                {
+                    list.Add(line);
+                }
+            }
+            return list;
+        }
+
+        private void WriteToFile(string filePath, List<string> list)
+        {
+            using (StreamWriter sw = new StreamWriter(filePath))
+            {
+                foreach(string line in list)
+                {
+                    sw.WriteLine(line);
+                }
+            }
+        }
+
         #endregion
 
         //Methods for interacting with Reddit, Email.
@@ -227,7 +267,7 @@ namespace RedditCrawler
             {
                 try
                 {
-                    //searchInput needs to be acquired from locally saved text file rcSearchCriteria.tx after being input, and will be used to filter the results
+                    //searchInput needs to be acquired from locally saved text file rcSearchCriteria.txt after being input, and will be used to filter the results
                     List<string> lstSearchInput = new List<string>();
                     //subreddit needs to be acquired from locally saved text file rcSubreddit.
                     string subreddit = "";
