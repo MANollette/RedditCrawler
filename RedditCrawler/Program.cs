@@ -117,6 +117,7 @@ namespace RedditCrawler
              -If exists, modify sub details
              -Return to main menu
              */
+             string filePath = "";
         }
 
         //Method for changing email address
