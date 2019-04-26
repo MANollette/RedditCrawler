@@ -43,7 +43,7 @@ namespace RedditCrawler
             Console.Clear();
             Console.WriteLine("Welcome to RedditCrawler!\nPlease select from the following menu.\n\n" +
                               "A. Input or change notification email\n" +
-                              "B. Select a new SubReddit\n" +
+                              "B. Input a new SubReddit\n" +
                               "C. Input new search criteria\n" +
                               "D. Run application with saved settings\n" +
                               "E. Delete all current search criteria.\n" +
@@ -113,12 +113,8 @@ namespace RedditCrawler
             }
             catch(Exception ex)
             {
-                CheckFileExists("rcErrorLog.txt");
-                List<string> sl = new List<string>();
-                string s = "Error occurred. Source: " + ex.Source + "\nStack trace: " + ex.StackTrace + "\nTarget site: " + ex.TargetSite
-                    + "\nData: " + ex.Data + "\nMessage:" + ex.Message;
-                sl.Add(s);
-                WriteToFile("rcErrorLog.txt", sl, true);
+                p.DebugLog(ex);
+                p.MainMenuInput();
             }
         }
 
@@ -149,13 +145,7 @@ namespace RedditCrawler
             }
             catch (Exception ex)
             {
-                CheckFileExists("rcErrorLog.txt");
-                List<string> sl = new List<string>();
-                string s = "Error occurred. Source: " + ex.Source + "\nStack trace: " + ex.StackTrace + "\nTarget site: " + ex.TargetSite
-                    + "\nData: " + ex.Data + "\nMessage:" + ex.Message;
-                sl.Add(s);
-                WriteToFile("rcErrorLog.txt", sl, true);
-                Console.ReadLine();
+                p.DebugLog(ex);
                 Console.Clear();
                 p.NewLogin();
             }
@@ -179,13 +169,8 @@ namespace RedditCrawler
             }
             catch(Exception ex)
             {
-                CheckFileExists("rcErrorLog.txt");
-                List<string> sl = new List<string>();
-                string s = "Error occurred. Source: " + ex.Source + "\nStack trace: " + ex.StackTrace + "\nTarget site: " + ex.TargetSite
-                    + "\nData: " + ex.Data + "\nMessage:" + ex.Message;
-                sl.Add(s);
-                WriteToFile("rcErrorLog.txt", sl, true);
-                Console.WriteLine("Error has been logged. Returning to menu.");
+                p.DebugLog(ex);
+                Console.Clear();
                 p.MainMenuInput();
             }
         }
@@ -213,13 +198,8 @@ namespace RedditCrawler
             }
             catch (Exception ex)
             {
-                CheckFileExists("rcErrorLog.txt");
-                List<string> sl = new List<string>();
-                string s = "Error occurred. Source: " + ex.Source + "\nStack trace: " + ex.StackTrace + "\nTarget site: " + ex.TargetSite
-                    + "\nData: " + ex.Data + "\nMessage:" + ex.Message;
-                sl.Add(s);
-                WriteToFile("rcErrorLog.txt", sl, true);
-                Console.WriteLine("An error has occurred. Returning to menu.");
+                p.DebugLog(ex);
+                Console.Clear();
                 p.MainMenuInput();
             }
         }
@@ -242,13 +222,8 @@ namespace RedditCrawler
             }
             catch (Exception ex)
             {
-                CheckFileExists("rcErrorLog.txt");
-                List<string> sl = new List<string>();
-                string s = "Error occurred. Source: " + ex.Source + "\nStack trace: " + ex.StackTrace + "\nTarget site: " + ex.TargetSite
-                    + "\nData: " + ex.Data + "\nMessage:" + ex.Message;
-                sl.Add(s);
-                WriteToFile("rcErrorLog.txt", sl, true);
-                Console.WriteLine("An error has occurred. Returning to menu.");
+                p.DebugLog(ex);
+                Console.Clear();
                 p.MainMenuInput();
             }
         }
@@ -279,13 +254,8 @@ namespace RedditCrawler
             }
             catch(Exception ex)
             {
-                CheckFileExists("rcErrorLog.txt");
-                List<string> sl = new List<string>();
-                string s = "Error occurred. Source: " + ex.Source + "\nStack trace: " + ex.StackTrace + "\nTarget site: " + ex.TargetSite
-                    + "\nData: " + ex.Data + "\nMessage:" + ex.Message;
-                sl.Add(s);
-                WriteToFile("rcErrorLog.txt", sl, true);
-                Console.WriteLine("An error has occurred. Returning to menu.");
+                p.DebugLog(ex);
+                Console.Clear();
                 p.MainMenuInput();
             }
         }
@@ -327,13 +297,8 @@ namespace RedditCrawler
                 }
                 catch (Exception ex)
                 {
-                    CheckFileExists("rcErrorLog.txt");
-                    List<string> sl = new List<string>();
-                    string s = "Error occurred. Source: " + ex.Source + "\nStack trace: " + ex.StackTrace + "\nTarget site: " + ex.TargetSite
-                        + "\nData: " + ex.Data + "\nMessage:" + ex.Message;
-                    sl.Add(s);
-                    WriteToFile("rcErrorLog.txt", sl, true);
-                    Console.WriteLine("An error has occurred. Returning to menu.");
+                    p.DebugLog(ex);
+                    Console.Clear();
                     p.MainMenuInput();
                 }
             }
@@ -346,20 +311,31 @@ namespace RedditCrawler
         //Method for retrieving posts from website.
         List<string> GetPosts(string user, string password, string sub)
         {
-            var reddit = new Reddit();
-            var login = reddit.LogIn(user, password);
-            var subreddit = reddit.GetSubreddit(sub);
-            subreddit.Subscribe();
-            List<string> resultList = new List<string>();
-            foreach (var post in subreddit.New.Take(15))
-            {
-                resultList.Add(post.Title.ToString());
+            Program p = new Program();
+            try
+            {              
+                var reddit = new Reddit();
+                var login = reddit.LogIn(user, password);
+                var subreddit = reddit.GetSubreddit(sub);
+                subreddit.Subscribe();
+                List<string> lstResultList = new List<string>();
+                foreach (var post in subreddit.New.Take(15))
+                {
+                    lstResultList.Add(post.Title.ToString());
 
-                /*For testing purposes
-                Console.WriteLine(post.Title.ToString());
-                Console.ReadLine();*/
+                    /*For testing purposes
+                    Console.WriteLine(post.Title.ToString());
+                    Console.ReadLine();*/
+                }
+                return lstResultList;
             }
-            return resultList;
+            catch(Exception ex)
+            {
+                p.DebugLog(ex);
+                Console.Clear();
+                p.MainMenuInput();
+            }
+            return null;
         }
         #endregion
 
@@ -383,62 +359,112 @@ namespace RedditCrawler
         private List<string> ReadFile(string filePath)
         {
             //List to append the lines of the file to
-            List<string> list = new List<string>();
+            List<string> lstRead = new List<string>();
+            Program p = new Program();
 
-            //using statement to handle the StreamReader
-            using (StreamReader sr = new StreamReader(filePath))
+            try
             {
-                //string to hold one line from file
-                string line;
-
-                //loops through the file and ends
-                //when the end of the file is reached
-                while ((line = sr.ReadLine()) != null)
+                CheckFileExists(filePath);
+                //using statement to handle the StreamReader
+                using (StreamReader sr = new StreamReader(filePath))
                 {
-                    list.Add(line); //add line to list
+                    //string to hold one line from file
+                    string line;
+
+                    //loops through the file and ends
+                    //when the end of the file is reached
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        lstRead.Add(line); //add line to list
+                    }
+                    sr.Close();
                 }
-                sr.Close();
+                return lstRead; //return list with appended lines  
             }
-            return list; //return list with appended lines           
+            catch(Exception ex)
+            {
+                p.DebugLog(ex);
+                Console.Clear();
+                p.MainMenuInput();
+            }
+            return null;
         }
 
         //By default, OVERWRITES the content of the specified file with the
         //contents of a given list
         private void WriteToFile(string filePath, List<string> list, bool append)
         {
-            using (StreamWriter sw = new StreamWriter(filePath, append))
+            Program p = new Program();
+            try
             {
-                //Loop through each line in list
-                foreach (string line in list)
+                CheckFileExists(filePath);
+                using (StreamWriter sw = new StreamWriter(filePath, append))
                 {
-                    sw.WriteLine(line); //add it to the file
+                    //Loop through each line in list
+                    foreach (string line in list)
+                    {
+                        sw.WriteLine(line); //add it to the file
+                    }
+                    sw.Flush();
+                    sw.Close();
                 }
-                sw.Flush();
-                sw.Close();
+            }
+            catch(Exception ex)
+            {
+                p.DebugLog(ex);
+                Console.Clear();
+                p.MainMenuInput();
             }
 
         }
+
+        //Method for logging error details to debug file and returning to menu.
+
         #endregion
 
         //Continuous method for monitoring sub.
         private void Listen(string user, string password)
         {
+            Program p = new Program();
             while (true)
             {
                 try
                 {
                     //searchInput needs to be acquired from locally saved text file rcSearchCriteria.txt after being input, and will be used to filter the results
+                    //If list is blank, user is notified to enter criteria from the main menu.
                     CheckFileExists("rcSearchCriteria.txt");
                     List<string> lstSearchInput = ReadFile("rcSearchCriteria.txt");
+                    if (lstSearchInput.Count < 1)
+                    {
+                        Console.WriteLine("Please select 'Input New Search Criteria' from main menu and add a search term.");
+                        Console.ReadLine();
+                        p.MainMenuInput();
+                    }
+
 
                     //subreddit needs to be acquired from locally saved text file rcSubreddit.txt
                     CheckFileExists("rcSubreddit.txt");
                     string sub = "/r/" + ReadFile("rcSubreddit.txt").First();
+                    if (sub.Count() < 4)
+                    {
+                        Console.WriteLine("Please select 'Input a New Subreddit' from main menu and add a subreddit to monitor.");
+                        Console.ReadLine();
+                        p.MainMenuInput();
+                    }
 
                     //List should also be acquired from a locally saved text file, and will consist of
                     //all previous entries the user has already been notified of. 
                     CheckFileExists("rcSearchRecords.txt");
                     List<string> lstDuplicateList = ReadFile("rcSearchRecords.txt");
+
+                    //Double checks that rcEmail.txt exists and is not null
+                    CheckFileExists("rcEmail.txt");
+                    if (ReadFile("rcEmail.txt").Count < 3)
+                    {
+                        Console.WriteLine("Please select 'Input a New Email' from main menu and enter your email credentials");
+                        Console.ReadLine();
+                        p.MainMenuInput();
+                    }
 
                     //gets list of 25 most recent posts from designated sub.
                     List<string> lstResultList = new Program().GetPosts(user, password, sub);
@@ -476,7 +502,6 @@ namespace RedditCrawler
                     //Now that the list has been trimmed, notify user of all results
                     if (lstResultList.Count > 1)
                     {
-                        CheckFileExists("rcSearchRecords.txt");
                         WriteToFile("rcSearchRecords.txt", lstResultList, true);
                         foreach (string s in lstResultList)
                         {
@@ -490,15 +515,9 @@ namespace RedditCrawler
                 }
                 catch (Exception ex)
                 {
-                    CheckFileExists("rcErrorLog.txt");
-                    List<string> sl = new List<string>();
-                    string s = "Error occurred. Source: " + ex.Source + "\nStack trace: " + ex.StackTrace + "\nTarget site: " + ex.TargetSite 
-                        + "\nData: " + ex.Data + "\nMessage:" + ex.Message + "\n\n";
-                    sl.Add(s);
-                    WriteToFile("rcErrorLog.txt", sl, true);
-                    Console.WriteLine(s);
-                    Console.ReadLine();
                     Program p = new Program();
+                    p.DebugLog(ex);
+                    Console.Clear();
                     p.MainMenuInput();
                 }
             }
