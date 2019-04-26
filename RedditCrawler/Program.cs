@@ -419,6 +419,19 @@ namespace RedditCrawler
         }
 
         //Method for logging error details to debug file and returning to menu.
+        private void DebugLog(Exception e)
+        {
+            Program p = new Program();
+            CheckFileExists("rcErrorLog.txt");
+            List<string> lstError = new List<string>();
+            string s = "Error occurred: " + DateTime.Now.ToShortDateString() + "\nSource: " + e.Source + "\nStack trace: " + e.StackTrace
+                + "\nTarget site: " + e.TargetSite + "\nData: " + e.Data + "\nMessage: " + e.Message;
+            Console.WriteLine(s);
+            lstError.Add(s);
+            WriteToFile("rcErrorLog.txt", lstError, true);
+            Console.ReadLine();
+            p.MainMenuInput();
+        }
 
         #endregion
 
@@ -515,13 +528,14 @@ namespace RedditCrawler
                 }
                 catch (Exception ex)
                 {
-                    Program p = new Program();
                     p.DebugLog(ex);
                     Console.Clear();
                     p.MainMenuInput();
                 }
             }
         }
+
+        //Methods for running application as a Windows service
     }
 
 }
