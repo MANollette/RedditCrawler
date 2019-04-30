@@ -7,6 +7,26 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        
+        <Frame Content="RedditCrawler Parameter Configuration" Background="AliceBlue"  HorizontalAlignment="Left" Height="399" Margin="10,10,0,0" VerticalAlignment="Top" Width="772"/>
+        <Label Content="Subreddit to monitor:" FontSize="16" HorizontalAlignment="Left" Margin="10,65,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="txtSubreddit" HorizontalAlignment="Left" Height="23" Margin="195,73,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="194"/>
+        <Label Content="Reddit Login:" FontSize="16" HorizontalAlignment="Left" Margin="10,163,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="txtRedditLogin" HorizontalAlignment="Left" Height="23" Margin="195,171,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="194"/>
+        <Label Content="Reddit Password:" FontSize="16" HorizontalAlignment="Left" Margin="10,193,0,0" VerticalAlignment="Top"/>
+        <PasswordBox Name="pwdReddit" HorizontalAlignment="Left" Margin="195,201,0,0" VerticalAlignment="Top" Width="194" Height="23"/>
+        <Label Content="Email Address:" FontSize="16" HorizontalAlignment="Left" Margin="10,287,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="txtEmail" HorizontalAlignment="Left" Height="23" Margin="195,295,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="194"/>
+        <Label Content="Email Password:" FontSize="16" HorizontalAlignment="Left" Margin="10,317,0,0" VerticalAlignment="Top"/>
+        <PasswordBox Name="pwdEmail" HorizontalAlignment="Left" Margin="195,325,0,0" VerticalAlignment="Top" Width="194" Height="23"/>
+        <Label Content="Search Terms:" FontSize="16" HorizontalAlignment="Left" Margin="417,37,0,0" VerticalAlignment="Top"/>
+        <RichTextBox Name="rtfSearchTerms" HorizontalAlignment="Left" Height="275" Margin="417,73,0,0" VerticalAlignment="Top" Width="283">
+            <FlowDocument>
+                <Paragraph>
+                    <Run Text=""/>
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+        <Button Name="btnSubmit" Content="Submit Parameters" FontSize="14" HorizontalAlignment="Left" Margin="568,368,0,0" VerticalAlignment="Top" Width="132" Click="Button_Click"/>
+
     </Grid>
 </Window>

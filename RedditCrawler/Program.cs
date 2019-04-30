@@ -14,7 +14,7 @@ using System.IO;
 namespace RedditCrawler
 {
     class Program
-    {//Testtest
+    {
         static void Main(string[] args)
         {
             //Program initialization for method call
