@@ -19,248 +19,23 @@ namespace RedditCrawler
         {
             //Program initialization for method call
             var p = new Program();
-
-            //Initialize main menu
-            p.MainMenuInput();
-
-        }
-
-        //Method for initial menu input retrieval.
-        private void MainMenuInput()
-        {
-            //Instantiate new program
-            Program p = new Program();
-
-            p.CheckFileExists("rcLogin.txt");
-            List<string> loginCheck = p.ReadFile("rcLogin.txt");
+            p.CheckFileExists("../../../rcLogin.txt");
+            List<string> loginCheck = p.ReadFile("../../../rcLogin.txt");
             if (loginCheck.Count == 0 || loginCheck == null)
-                p.NewLogin();
-
-            List<string> credentials = p.ReadFile("rcLogin.txt");
-            string user = credentials[0];
-            string password = credentials[1];
-
-            Console.Clear();
-            Console.WriteLine("Welcome to RedditCrawler!\nPlease select from the following menu.\n\n" +
-                              "A. Input or change notification email\n" +
-                              "B. Input a new SubReddit\n" +
-                              "C. Input new search criteria\n" +
-                              "D. Run application with saved settings\n" +
-                              "E. Delete all current search criteria.\n" +
-                              "F. Exit application.");
-            try
             {
-                string response = Console.ReadLine().ToLower();
-                char cResponse = 'n';
-                if (response.Count() == 1)
-                {
-                    cResponse = response[0];
-                    if (cResponse == 'a'
-                        || cResponse == 'b'
-                        || cResponse == 'c'
-                        || cResponse == 'd'
-                        || cResponse == 'e'
-                        || cResponse == 'f')
-                    {
-                        if (cResponse != 'n')
-                        {
-                            try
-                            {
-                                switch (cResponse)
-                                {
-                                    case 'a':
-                                        p.NewEmail();
-                                        break;
-                                    case 'b':
-                                        p.NewSub();
-                                        break;
-                                    case 'c':
-                                        p.NewSearch();
-                                        break;
-                                    case 'd':
-                                        p.Listen(user, password);
-                                        break;
-                                    case 'e':
-                                        p.DeleteSearchCriteria();
-                                        break;
-                                    case 'f':
-                                        Environment.Exit(0);
-                                        break;
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine("Error! Details: " + e.Message);
-                                Console.ReadLine();
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Returned input from MainMenuInput not valid.");
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Please input a single character A-E");
-                        MainMenuInput();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Please input a single character A-E");
-                    MainMenuInput();
-                }              
+                Exception e = new Exception("Login failed. Please configure your settings in rcConfig.");
+                p.DebugLog(e);
+                System.Environment.Exit(0);
             }
-            catch(Exception ex)
+            else
             {
-                p.DebugLog(ex);
-                p.MainMenuInput();
+                List<string> credentials = p.ReadFile("../../../rcLogin.txt");
+                string user = credentials[0];
+                string password = credentials[1];
+                p.Listen(user, password);
             }
-        }
 
-        //Methods for creation of new user-specified information. 
-        #region NewCriteria   
-        
-        //Method for changing login credentials
-        private void NewLogin()
-        {
-            Program p = new Program();
-
-            try
-            {
-                p.CheckFileExists("rcLogin.txt");
-                Console.WriteLine("Please enter your Reddit username");
-                string user = Console.ReadLine();
-                Console.WriteLine("Please enter your password");
-                string password = Console.ReadLine();
-                List<string> credentials = new List<string>();
-
-                //Test login credentials
-                var reddit = new Reddit();
-                var login = reddit.LogIn(user, password);
-                credentials.Add(user);
-                credentials.Add(password);
-
-                p.WriteToFile("rcLogin.txt", credentials, false);
-            }
-            catch (Exception ex)
-            {
-                p.DebugLog(ex);
-                Console.Clear();
-                p.NewLogin();
-            }
-        }
-
-        //Method for changing the subreddit to monitor
-        private void NewSub()
-        {
-            string subFilePath = "rcSubreddit.txt";
-            Program p = new Program();
-
-            try
-            {
-                CheckFileExists(subFilePath);
-                Console.WriteLine("Please enter a subreddit name.");
-                string sub = Console.ReadLine();
-                List<string> subList = new List<string>();
-                subList.Add(sub);
-                WriteToFile(subFilePath, subList, false);
-                p.MainMenuInput();
-            }
-            catch(Exception ex)
-            {
-                p.DebugLog(ex);
-                Console.Clear();
-                p.MainMenuInput();
-            }
-        }
-
-        //Method for changing email address
-        private void NewEmail()
-        {
-            //set the name of the file path that contains 
-            //the information of the user
-            string emailFilePath = "rcEmail.txt";
-            Program p = new Program();
-
-            try
-            {
-                CheckFileExists(emailFilePath);
-                Console.WriteLine("Please enter your email address");
-                string email = Console.ReadLine();
-                Console.WriteLine("Please enter your email password");
-                string pass = Console.ReadLine();
-                List<string> subList = new List<string>();
-                subList.Add(email);
-                subList.Add(pass);
-                WriteToFile(emailFilePath, subList, false);
-                p.MainMenuInput();
-            }
-            catch (Exception ex)
-            {
-                p.DebugLog(ex);
-                Console.Clear();
-                p.MainMenuInput();
-            }
-        }
-
-        //Method for initializing, changing, or adding new search criteria
-        private void NewSearch()
-        {            
-            string searchCriteriaFilePath = "rcSearchCriteria.txt";
-            Program p = new Program();
-
-            try
-            {
-                CheckFileExists(searchCriteriaFilePath);
-                Console.WriteLine("Please enter the search term you'd like to listen for.");
-                string searchTerm = Console.ReadLine().ToLower();
-                List<string> subList = new List<string>();
-                subList.Add(searchTerm);
-                WriteToFile(searchCriteriaFilePath, subList, true);
-                p.MainMenuInput();
-            }
-            catch (Exception ex)
-            {
-                p.DebugLog(ex);
-                Console.Clear();
-                p.MainMenuInput();
-            }
-        }
-
-        private void DeleteSearchCriteria()
-        {
-            Program p = new Program();
-            Console.WriteLine("Are you sure you want to delete all current search criteria?");
-            try
-            {
-                string r = Console.ReadLine();
-                if (r.ToLower() == "y" || r.ToLower() == "yes")
-                {
-                    CheckFileExists("rcSearchCriteria.txt");
-                    StreamWriter sw = File.CreateText("rcSearchCriteria.txt");
-                    sw.Flush();
-                    sw.Close();
-                }
-                else if (r.ToLower() == "n" || r.ToLower() == "no")
-                {
-                    p.MainMenuInput();
-                }
-                else
-                {
-                    Console.WriteLine("Please enter 'yes' or 'no'");
-                    p.DeleteSearchCriteria();
-                }
-            }
-            catch(Exception ex)
-            {
-                p.DebugLog(ex);
-                Console.Clear();
-                p.MainMenuInput();
-            }
-        }
-        
-        #endregion
+        }      
 
         //Methods for interacting with Reddit, Email.
         #region Connectivity
@@ -268,9 +43,8 @@ namespace RedditCrawler
         //Method for sending email notification to user.
         void NotifyUser(string result)
         {
-            Console.WriteLine(result);
-            CheckFileExists("rcEmail.txt");
-            List<string> emailCredentials = ReadFile("rcEmail.txt");
+            CheckFileExists("../../../rcEmail.txt");
+            List<string> emailCredentials = ReadFile("../../../rcEmail.txt");
             if (emailCredentials.Count > 0)
             {
                 string email = emailCredentials[0];
@@ -298,13 +72,13 @@ namespace RedditCrawler
                 catch (Exception ex)
                 {
                     p.DebugLog(ex);
-                    Console.Clear();
-                    p.MainMenuInput();
                 }
             }
             else
             {
-                Console.WriteLine("Please enter a valid email/password combination through the main menu\n");
+                Exception e = new Exception("Error caught validating email credentials in RedditCrawler service");
+                Program p = new Program();
+                p.DebugLog(e);
             }
         }
         
@@ -332,8 +106,6 @@ namespace RedditCrawler
             catch(Exception ex)
             {
                 p.DebugLog(ex);
-                Console.Clear();
-                p.MainMenuInput();
             }
             return null;
         }
@@ -384,8 +156,6 @@ namespace RedditCrawler
             catch(Exception ex)
             {
                 p.DebugLog(ex);
-                Console.Clear();
-                p.MainMenuInput();
             }
             return null;
         }
@@ -412,8 +182,6 @@ namespace RedditCrawler
             catch(Exception ex)
             {
                 p.DebugLog(ex);
-                Console.Clear();
-                p.MainMenuInput();
             }
 
         }
@@ -422,15 +190,13 @@ namespace RedditCrawler
         private void DebugLog(Exception e)
         {
             Program p = new Program();
-            CheckFileExists("rcErrorLog.txt");
+            CheckFileExists("../../../rcErrorLog.txt");
             List<string> lstError = new List<string>();
             string s = "Error occurred: " + DateTime.Now.ToShortDateString() + "\nSource: " + e.Source + "\nStack trace: " + e.StackTrace
                 + "\nTarget site: " + e.TargetSite + "\nData: " + e.Data + "\nMessage: " + e.Message;
             Console.WriteLine(s);
             lstError.Add(s);
-            WriteToFile("rcErrorLog.txt", lstError, true);
-            Console.ReadLine();
-            p.MainMenuInput();
+            WriteToFile("../../../rcErrorLog.txt", lstError, true);
         }
 
         #endregion
@@ -445,83 +211,72 @@ namespace RedditCrawler
                 {
                     //searchInput needs to be acquired from locally saved text file rcSearchCriteria.txt after being input, and will be used to filter the results
                     //If list is blank, user is notified to enter criteria from the main menu.
-                    CheckFileExists("rcSearchCriteria.txt");
-                    List<string> lstSearchInput = ReadFile("rcSearchCriteria.txt");
+                    CheckFileExists("../../../rcSearchCriteria.txt");
+                    List<string> lstSearchInput = ReadFile("../../../rcSearchCriteria.txt");
                     if (lstSearchInput.Count < 1)
-                    {
-                        Console.WriteLine("Please select 'Input New Search Criteria' from main menu and add a search term.");
-                        Console.ReadLine();
-                        p.MainMenuInput();
-                    }
+                        System.Environment.Exit(0);
 
 
                     //subreddit needs to be acquired from locally saved text file rcSubreddit.txt
-                    CheckFileExists("rcSubreddit.txt");
-                    string sub = "/r/" + ReadFile("rcSubreddit.txt").First();
+                    CheckFileExists("../../../rcSubreddit.txt");
+                    string sub = ReadFile("../../../rcSubreddit.txt").First();
                     if (sub.Count() < 4)
-                    {
-                        Console.WriteLine("Please select 'Input a New Subreddit' from main menu and add a subreddit to monitor.");
-                        Console.ReadLine();
-                        p.MainMenuInput();
-                    }
+                        System.Environment.Exit(0);
 
                     //List should also be acquired from a locally saved text file, and will consist of
                     //all previous entries the user has already been notified of. 
-                    CheckFileExists("rcSearchRecords.txt");
-                    List<string> lstDuplicateList = ReadFile("rcSearchRecords.txt");
+                    CheckFileExists("../../../rcSearchRecords.txt");
+                    List<string> lstDuplicateList = ReadFile("../../../rcSearchRecords.txt");
 
                     //Double checks that rcEmail.txt exists and is not null
-                    CheckFileExists("rcEmail.txt");
-                    if (ReadFile("rcEmail.txt").Count < 3)
-                    {
-                        Console.WriteLine("Please select 'Input a New Email' from main menu and enter your email credentials");
-                        Console.ReadLine();
-                        p.MainMenuInput();
-                    }
+                    CheckFileExists("../../../rcEmail.txt");
+                    if (ReadFile("../../../rcEmail.txt").Count < 2)
+                        System.Environment.Exit(0);
 
                     //gets list of 25 most recent posts from designated sub.
                     List<string> lstResultList = new Program().GetPosts(user, password, sub);
-
+                    List<string> lstPassedList = new List<string>();
 
                     //Remove posts that do not match criteria
                     for(int i = lstResultList.Count - 1; i >= 0; --i)
                     {
                         for (int i2 = 0; i2 < lstSearchInput.Count; i2++)
                         {
-                            if (!lstResultList[i].ToLower().Contains(lstSearchInput[i2]))
+                            if (lstResultList[i].ToLower().Contains(lstSearchInput[i2].ToLower()))
                             {
-                                lstResultList.RemoveAt(i);
-                                break;
+                                lstPassedList.Add(lstResultList[i]);
                             }
                         }
                     }
 
+                    lstPassedList = lstPassedList.Distinct().ToList();
                     //cycle through the list of already-posted results
-                    if (lstResultList.Count > 0 && lstDuplicateList.Count > 0)
+                    if (lstPassedList.Count > 0 && lstDuplicateList.Count > 0)
                     {
                         for(int i = 0; i < lstDuplicateList.Count; ++i)
                         {
-                            for(int i2 = 0; i2 < lstResultList.Count; ++i2)
+                            for(int i2 = 0; i2 < lstPassedList.Count; ++i2)
                             {
-                                if (lstDuplicateList[i] == lstResultList[i2])
+                                if (lstDuplicateList[i].ToLower() == lstPassedList[i2].ToLower())
                                 {
-                                    lstResultList.RemoveAt(i2);
-                                    break;
+                                    lstPassedList.RemoveAt(i2);
                                 }
                             }
                         }
                     }
 
                     //Now that the list has been trimmed, notify user of all results
-                    if (lstResultList.Count > 1)
+                    if (lstPassedList.Count > 1)
                     {
-                        WriteToFile("rcSearchRecords.txt", lstResultList, true);
-                        foreach (string s in lstResultList)
+                        WriteToFile("../../../rcSearchRecords.txt", lstPassedList, true);
+                        foreach (string s in lstPassedList)
                         {
+                            Console.WriteLine("Sent: " + s);
                             new Program().NotifyUser(s);                          
                         }
                     }
                     lstResultList.Clear();
+                    lstPassedList.Clear();
                     lstDuplicateList.Clear();
                     lstSearchInput.Clear();
                     Thread.Sleep(60000);
@@ -529,8 +284,7 @@ namespace RedditCrawler
                 catch (Exception ex)
                 {
                     p.DebugLog(ex);
-                    Console.Clear();
-                    p.MainMenuInput();
+                    System.Environment.Exit(0);
                 }
             }
         }

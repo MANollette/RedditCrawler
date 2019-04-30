@@ -1,0 +1,15 @@
+Error occurred: 4/30/2019
+Source: System
+Stack trace:    at System.Net.HttpWebRequest.GetRequestStream(TransportContext& context)
+   at System.Net.HttpWebRequest.GetRequestStream()
+   at RedditSharp.Reddit.LogIn(String username, String password, Boolean useSsl)
+   at RedditCrawler.Program.GetPosts(String user, String password, String sub) in C:\Users\MANollette\source\repos\RedditCrawler\RedditCrawler\Program.cs:line 92
+Target site: System.IO.Stream GetRequestStream(System.Net.TransportContext ByRef)
+Data: System.Collections.ListDictionaryInternal
+Message: Unable to connect to the remote server
+Error occurred: 4/30/2019
+Source: RedditCrawler
+Stack trace:    at RedditCrawler.Program.Listen(String user, String password) in C:\Users\MANollette\source\repos\RedditCrawler\RedditCrawler\Program.cs:line 241
+Target site: Void Listen(System.String, System.String)
+Data: System.Collections.ListDictionaryInternal
+Message: Object reference not set to an instance of an object.
