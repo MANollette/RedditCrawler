@@ -35,24 +35,24 @@ namespace rcConfig
             try
             {
                 //Populate search criteria contents with existing criteria
-                CheckFileExists("../../../rcSearchCriteria.txt");
-                if (ReadFile("../../../rcSearchCriteria.txt").Count != 0)
+                CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
+                if (ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt").Count > 0)
                 {
-                    List<string> lstSearchInput = ReadFile("../../../rcSearchCriteria.txt");
-                    if (lstSearchInput.Count > 1)
+                    List<string> lstSearchInput = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
+                    if (lstSearchInput.Count > 0)
                     {
                         foreach (string s in lstSearchInput)
                         {
-                            rtfSearchTerms.AppendText(s);
+                            rtfSearchTerms.AppendText(s + "\n");
                         }
                     }
                 }
             
                 //Populate subreddit with existing sub to monitor
-                CheckFileExists("../../../rcSubreddit.txt");
-                if (ReadFile("../../../rcSubreddit.txt").Count != 0)
+                CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt");
+                if (ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt").Count != 0)
                 {
-                    string sub = ReadFile("../../../rcSubreddit.txt").First();
+                    string sub = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt").First();
                     if (sub.Count() > 3)
                     {
                         txtSubreddit.Text = sub;
@@ -60,10 +60,10 @@ namespace rcConfig
                 }
 
                 //Populate email field with existing email. 
-                CheckFileExists("../../../rcEmail.txt");
-                if (ReadFile("../../../rcEmail.txt").Count != 0)
+                CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
+                if (ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt").Count != 0)
                 {
-                    List<string> emailCredentials = ReadFile("../../../rcEmail.txt");
+                    List<string> emailCredentials = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
                     if (emailCredentials.Count > 1)
                     {
                         txtEmail.Text = emailCredentials[0];
@@ -72,10 +72,10 @@ namespace rcConfig
                 }
 
                 //Populate login fields with existing credentials
-                CheckFileExists("../../../rcLogin.txt");
-                if (ReadFile("../../../rcLogin.txt").Count != 0)
+                CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
+                if (ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt").Count != 0)
                 {
-                    List<string> redditCredentials = ReadFile("../../../rcLogin.txt");
+                    List<string> redditCredentials = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
                     if (redditCredentials.Count > 1)
                     {
                         txtRedditLogin.Text = redditCredentials[0];
@@ -94,11 +94,11 @@ namespace rcConfig
         #region NewCriteria   
 
         //Method for changing login credentials
-        private void NewLogin(string user, string password)
+        private bool NewLogin(string user, string password)
         {
             try
             {
-                CheckFileExists("../../../rcLogin.txt");
+                CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
                 List<string> credentials = new List<string>();
 
                 //Test login credentials
@@ -107,19 +107,21 @@ namespace rcConfig
                 credentials.Add(user);
                 credentials.Add(password);
 
-                WriteToFile("../../../rcLogin.txt", credentials, false);
+                WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt", credentials, false);
+                return true;
             }
             catch (Exception ex)
             {
                 DebugLog(ex);
                 MessageBox.Show("Invalid reddit login credentials");
+                return false;
             }
         }
 
         //Method for changing the subreddit to monitor
         private void NewSub(string sub)
         {
-            string subFilePath = "../../../rcSubreddit.txt";
+            string subFilePath = Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt";
 
             try
             {
@@ -136,11 +138,11 @@ namespace rcConfig
         }
 
         //Method for changing email address
-        private void NewEmail(string email, string pass)
+        private bool NewEmail(string email, string pass)
         {
             //set the name of the file path that contains 
             //the information of the user
-            string emailFilePath = "../../../rcEmail.txt";
+            string emailFilePath = Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt";
 
             try
             {
@@ -152,12 +154,19 @@ namespace rcConfig
                 SmtpServer.Port = 587;
                 SmtpServer.Credentials = new System.Net.NetworkCredential(email, pass);
                 SmtpServer.EnableSsl = true;
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(email); mail.To.Add(email);
+                mail.Subject = "Redditcrawler Email Test";
+                mail.Body = "Your RedditCrawler email has been successfully verified!";
+                SmtpServer.Send(mail);
                 WriteToFile(emailFilePath, subList, false);
+                return true;
             }
             catch (Exception ex)
             {
                 DebugLog(ex);
                 MessageBox.Show("Invalid email credentials: " + ex.Message);
+                return false;
             }
         }
 
@@ -258,13 +267,13 @@ namespace rcConfig
         //Method for logging error details to debug file and returning to menu.
         private void DebugLog(Exception e)
         {
-            CheckFileExists("rcErrorLog.txt");
+            CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt");
             List<string> lstError = new List<string>();
             string s = "Error occurred: " + DateTime.Now.ToShortDateString() + "\nSource: " + e.Source + "\nStack trace: " + e.StackTrace
                 + "\nTarget site: " + e.TargetSite + "\nData: " + e.Data + "\nMessage: " + e.Message;
             Console.WriteLine(s);
             lstError.Add(s);
-            WriteToFile("rcErrorLog.txt", lstError, true);
+            WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt", lstError, true);
             Console.ReadLine();
         }
 
@@ -290,60 +299,125 @@ namespace rcConfig
             {
                 #region variable_Initialization
                 //Initialize all variables.
+                //Initialize reddit username as rUser variable. 
                 string rUser = null;
+                //Confirm valid entry in txtRedditLogin textbox
                 if (txtRedditLogin.Text != null && txtRedditLogin.Text.Count() > 2)
                 {
                     rUser = txtRedditLogin.Text;
                 }
+                //If invalid entry, display error & return
+                else
+                {
+                    MessageBox.Show("Please input a valid reddit username");
+                    return;
+                }
+                //Initialize email variable
                 string email = null;
+                //Check for valid input in txtEmail textbox
                 if (txtEmail.Text != null)
                 {
+                    //Confirm valid email format
                     if (IsEmailValid(txtEmail.Text) == true)
                     {
                         email = txtEmail.Text;
                     }
-                }
-                string sub = null;
-                if (txtSubreddit.Text[0] == '/' && txtSubreddit.Text[1].ToString().ToLower() == "r" && txtSubreddit.Text[2] == '/')
-                {
-                    if (txtSubreddit.Text.Count() > 3)
+                    //If invalid, display error & return
+                    else
                     {
-                        sub = txtSubreddit.Text;
+                        MessageBox.Show("Please enter a valid email address");
+                        return;
                     }
                 }
                 else
                 {
-                    MessageBox.Show("Please ensure your subreddit begins with '/r/'");
+                    MessageBox.Show("Please enter an email address");
+                    return;
                 }
-
+                //Initialize subreddit variable
+                string sub = null;
+                //Check for valid input in txtSubreddit textbox
+                if (txtSubreddit.Text != null && txtSubreddit.Text.Count() > 2)
+                {
+                    //Confirm subreddit correctly includes initial /r/ format
+                    if (txtSubreddit.Text[0] == '/' && txtSubreddit.Text[1].ToString().ToLower() == "r" && txtSubreddit.Text[2] == '/')
+                    {
+                        if (txtSubreddit.Text.Count() > 3)
+                        {
+                            sub = txtSubreddit.Text;
+                        }
+                    }
+                    //If invalid, display error message & return. 
+                    else
+                    {
+                        MessageBox.Show("Please ensure your subreddit begins with '/r/'");
+                        return;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Please input the subreddit you'd like to monitor.");
+                    return;
+                }
+                //Initialize reddit password variable
                 string rPass = null;
-                if (pwdReddit.Password != null)
+                if (pwdReddit.Password.Count() > 0)
                 {
                     rPass = pwdReddit.Password;
                 }
+                else
+                {
+                    MessageBox.Show("Please input your reddit password.");
+                    return;
+                }
+                //Initialize email password variable.
                 string ePass = null;
-                if (pwdEmail.Password != null)
+                if (pwdEmail.Password.Count() > 0)
                 {
                     ePass = pwdEmail.Password;
                 }
+                else
+                {
+                    MessageBox.Show("Please input your email password.");
+                    return;
+                }
 
                 TextRange searchCriteria = null;
+                //analyzes entries in search terms rich textbox, confirms there is input present. 
                 var start = rtfSearchTerms.Document.ContentStart;
                 var end = rtfSearchTerms.Document.ContentEnd;
                 int difference = start.GetOffsetToPosition(end);
-                if (difference != 0)
+                if (difference != 4)
                 {
+                    
                     searchCriteria = new TextRange(rtfSearchTerms.Document.ContentStart, rtfSearchTerms.Document.ContentEnd);
+                }
+                else
+                {
+                    MessageBox.Show("Please input the terms you'd like to listen for. \nBe sure to put each term on a new line");
+                    return;
                 }
 
                 #endregion
 
                 if (rUser != null && rPass != null && email != null && ePass != null && sub != null && searchCriteria != null)
                 {
-                    NewLogin(rUser, rPass);
-                    NewEmail(email, ePass);
-                    NewSub(sub);
-                    WriteTRToFile("../../../rcSearchCriteria.txt", searchCriteria, false);
+                    try
+                    {
+                        bool rLog = NewLogin(rUser, rPass);
+                        if (rLog == false)
+                            return;
+                        bool eLog = NewEmail(email, ePass);
+                        if (eLog == false)
+                            return;
+                        NewSub(sub);
+                        WriteTRToFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt", searchCriteria, false);
+                        MessageBox.Show("Criteria successfully updated. You may now run RedditCrawler");
+                    }
+                    catch(Exception ex)
+                    {
+
+                    }
                 }
             }
             catch(Exception ex)

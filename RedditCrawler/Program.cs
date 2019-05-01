@@ -19,9 +19,10 @@ namespace RedditCrawler
         {
             //Program initialization for method call
             var p = new Program();
-            p.CheckFileExists("../../../rcLogin.txt");
-            List<string> loginCheck = p.ReadFile("../../../rcLogin.txt");
-            if (loginCheck.Count == 0 || loginCheck == null)
+
+            p.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
+            List<string> loginCheck = p.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
+            if (loginCheck.Count() == 0 || loginCheck == null)
             {
                 Exception e = new Exception("Login failed. Please configure your settings in rcConfig.");
                 p.DebugLog(e);
@@ -29,7 +30,7 @@ namespace RedditCrawler
             }
             else
             {
-                List<string> credentials = p.ReadFile("../../../rcLogin.txt");
+                List<string> credentials = p.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
                 string user = credentials[0];
                 string password = credentials[1];
                 p.Listen(user, password);
@@ -43,8 +44,8 @@ namespace RedditCrawler
         //Method for sending email notification to user.
         void NotifyUser(string result)
         {
-            CheckFileExists("../../../rcEmail.txt");
-            List<string> emailCredentials = ReadFile("../../../rcEmail.txt");
+            CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
+            List<string> emailCredentials = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
             if (emailCredentials.Count > 0)
             {
                 string email = emailCredentials[0];
@@ -109,6 +110,7 @@ namespace RedditCrawler
             }
             return null;
         }
+
         #endregion
 
         //Methods for working with files
@@ -190,13 +192,13 @@ namespace RedditCrawler
         private void DebugLog(Exception e)
         {
             Program p = new Program();
-            CheckFileExists("../../../rcErrorLog.txt");
+            CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt");
             List<string> lstError = new List<string>();
             string s = "Error occurred: " + DateTime.Now.ToShortDateString() + "\nSource: " + e.Source + "\nStack trace: " + e.StackTrace
                 + "\nTarget site: " + e.TargetSite + "\nData: " + e.Data + "\nMessage: " + e.Message;
             Console.WriteLine(s);
             lstError.Add(s);
-            WriteToFile("../../../rcErrorLog.txt", lstError, true);
+            WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt", lstError, true);
         }
 
         #endregion
@@ -211,27 +213,34 @@ namespace RedditCrawler
                 {
                     //searchInput needs to be acquired from locally saved text file rcSearchCriteria.txt after being input, and will be used to filter the results
                     //If list is blank, user is notified to enter criteria from the main menu.
-                    CheckFileExists("../../../rcSearchCriteria.txt");
-                    List<string> lstSearchInput = ReadFile("../../../rcSearchCriteria.txt");
+                    CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
+                    List<string> lstSearchInput = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
                     if (lstSearchInput.Count < 1)
+                    {
+                        Exception ex = new Exception("You must ensure rcSearchCriteria.txt has search terms.");
+                        p.DebugLog(ex);
                         System.Environment.Exit(0);
-
+                    }
 
                     //subreddit needs to be acquired from locally saved text file rcSubreddit.txt
-                    CheckFileExists("../../../rcSubreddit.txt");
-                    string sub = ReadFile("../../../rcSubreddit.txt").First();
+                    CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt");
+                    string sub = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt").First();
                     if (sub.Count() < 4)
                         System.Environment.Exit(0);
 
                     //List should also be acquired from a locally saved text file, and will consist of
                     //all previous entries the user has already been notified of. 
-                    CheckFileExists("../../../rcSearchRecords.txt");
-                    List<string> lstDuplicateList = ReadFile("../../../rcSearchRecords.txt");
+                    CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSearchRecords.txt");
+                    List<string> lstDuplicateList = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchRecords.txt");
 
                     //Double checks that rcEmail.txt exists and is not null
-                    CheckFileExists("../../../rcEmail.txt");
-                    if (ReadFile("../../../rcEmail.txt").Count < 2)
+                    CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
+                    if (ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt").Count < 2)
+                    {
+                        Exception ex = new Exception("You must ensure rcEmail.txt has a valid email address & password");
+                        p.DebugLog(ex);
                         System.Environment.Exit(0);
+                    }
 
                     //gets list of 25 most recent posts from designated sub.
                     List<string> lstResultList = new Program().GetPosts(user, password, sub);
@@ -268,7 +277,7 @@ namespace RedditCrawler
                     //Now that the list has been trimmed, notify user of all results
                     if (lstPassedList.Count > 1)
                     {
-                        WriteToFile("../../../rcSearchRecords.txt", lstPassedList, true);
+                        WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchRecords.txt", lstPassedList, true);
                         foreach (string s in lstPassedList)
                         {
                             Console.WriteLine("Sent: " + s);
