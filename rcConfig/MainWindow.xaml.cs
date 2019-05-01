@@ -9,6 +9,7 @@ using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -66,8 +67,8 @@ namespace rcConfig
                     List<string> emailCredentials = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
                     if (emailCredentials.Count > 1)
                     {
-                        txtEmail.Text = emailCredentials[0];
-                        pwdEmail.Password = emailCredentials[1];
+                        txtEmail.Text = DecodePassword(emailCredentials[0]);
+                        pwdEmail.Password = DecodePassword(emailCredentials[1]);
                     }
                 }
 
@@ -78,8 +79,8 @@ namespace rcConfig
                     List<string> redditCredentials = ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
                     if (redditCredentials.Count > 1)
                     {
-                        txtRedditLogin.Text = redditCredentials[0];
-                        pwdReddit.Password = redditCredentials[1];
+                        txtRedditLogin.Text = DecodePassword(redditCredentials[0]);
+                        pwdReddit.Password = DecodePassword(redditCredentials[1]);
                     }
                 }
             }
@@ -98,15 +99,17 @@ namespace rcConfig
         {
             try
             {
+                //Ensures rcLogin.txt exists
                 CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
                 List<string> credentials = new List<string>();
 
-                //Test login credentials
+                //Test login credentials, catching exception if var login fails
                 var reddit = new Reddit();
                 var login = reddit.LogIn(user, password);
-                credentials.Add(user);
-                credentials.Add(password);
+                credentials.Add(EncodePassword(user));
+                credentials.Add(EncodePassword(password));
 
+                //Now that the login has been successful, write the credentials to rcLogin.txt
                 WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt", credentials, false);
                 return true;
             }
@@ -121,10 +124,11 @@ namespace rcConfig
         //Method for changing the subreddit to monitor
         private void NewSub(string sub)
         {
+            //Retrieves filepath of intended rcSubreddit.txt
             string subFilePath = Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt";
-
             try
             {
+                //Ensures rcSubreddit.txt exists
                 CheckFileExists(subFilePath);
                 List<string> subList = new List<string>();
                 subList.Add(sub);
@@ -140,16 +144,18 @@ namespace rcConfig
         //Method for changing email address
         private bool NewEmail(string email, string pass)
         {
-            //set the name of the file path that contains 
-            //the information of the user
+            //set the name of the file path that contains the information of the user
             string emailFilePath = Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt";
-
             try
             {
+                //Ensures file exists
                 CheckFileExists(emailFilePath);
+                //Creates list with input credentials
                 List<string> subList = new List<string>();
-                subList.Add(email);
-                subList.Add(pass);
+                subList.Add(EncodePassword(email));
+                subList.Add(EncodePassword(pass));
+
+                //Tests input credentials by sending a test email. 
                 SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
                 SmtpServer.Port = 587;
                 SmtpServer.Credentials = new System.Net.NetworkCredential(email, pass);
@@ -174,8 +180,44 @@ namespace rcConfig
 
         #region HelperMethods
 
-        //Check if the file at the specified file path exists
-        //If it doesn't, go ahead and create one
+        //Method for encoding password
+        private string EncodePassword(string password)
+        {
+            //Initialize byte array & encoded password field
+            string encodedPassword = String.Empty;
+
+            //Try encoding password in byte array format
+            try
+            {
+                byte[] data_byte = Encoding.UTF8.GetBytes(password);
+                encodedPassword = HttpUtility.UrlEncode(Convert.ToBase64String(data_byte));
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
+            }
+            return encodedPassword;
+        }
+
+        //Method for decoding password from storage. 
+        private string DecodePassword(string encodedPassword)
+        {
+            string decodedPassword = String.Empty;
+
+            //Try decoding password back to string format
+            try
+            {
+                byte[] data_byte = Convert.FromBase64String(HttpUtility.UrlDecode(encodedPassword));
+                decodedPassword = Encoding.UTF8.GetString(data_byte);
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
+            }
+            return decodedPassword;
+        }
+
+        //Check if the file at the specified file path exists. If it doesn't, go ahead and create one
         private void CheckFileExists(string filePath)
         {
             //Check if the file exists at the given file path
@@ -186,8 +228,7 @@ namespace rcConfig
             }
         }
 
-        //Reads all of the lines from the specified file and
-        //returns a list with all of them
+        //Reads all of the lines from the specified file and returns a list with all of them
         private List<string> ReadFile(string filePath)
         {
             //List to append the lines of the file to
@@ -240,7 +281,6 @@ namespace rcConfig
             catch (Exception ex)
             {
                 DebugLog(ex);
-                Console.Clear();
             }
 
         }
@@ -250,6 +290,7 @@ namespace rcConfig
         {
             try
             {
+                //Ensures file exists
                 CheckFileExists(filePath);
                 using (StreamWriter sw = new StreamWriter(filePath, append))
                 {
@@ -267,16 +308,19 @@ namespace rcConfig
         //Method for logging error details to debug file and returning to menu.
         private void DebugLog(Exception e)
         {
+            //Ensures debug log exists
             CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt");
             List<string> lstError = new List<string>();
+            //Creates string containing error details
             string s = "Error occurred: " + DateTime.Now.ToShortDateString() + "\nSource: " + e.Source + "\nStack trace: " + e.StackTrace
                 + "\nTarget site: " + e.TargetSite + "\nData: " + e.Data + "\nMessage: " + e.Message;
             Console.WriteLine(s);
             lstError.Add(s);
+            //Writes error details to rcErrorLog.txt
             WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt", lstError, true);
-            Console.ReadLine();
         }
 
+        //Method for confirming format validity of email string
         private bool IsEmailValid(string email)
         {
             try
@@ -297,6 +341,7 @@ namespace rcConfig
         {
             try
             {
+                //Initialize all field-based variables.
                 #region variable_Initialization
                 //Initialize all variables.
                 //Initialize reddit username as rUser variable. 
@@ -400,13 +445,16 @@ namespace rcConfig
 
                 #endregion
 
+                //Checks that each created variable is not null
                 if (rUser != null && rPass != null && email != null && ePass != null && sub != null && searchCriteria != null)
                 {
                     try
                     {
+                        //Tests login credentials
                         bool rLog = NewLogin(rUser, rPass);
                         if (rLog == false)
                             return;
+                        //Tests email credentials
                         bool eLog = NewEmail(email, ePass);
                         if (eLog == false)
                             return;
@@ -416,7 +464,7 @@ namespace rcConfig
                     }
                     catch(Exception ex)
                     {
-
+                        DebugLog(ex);
                     }
                 }
             }
