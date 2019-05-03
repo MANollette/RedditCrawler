@@ -186,6 +186,9 @@ namespace RedditCrawler
             try
             {
                 CheckFileExists(emailFilePath);
+                List<string> emailList = ReadFile(emailFilePath);
+                foreach (string s in emailList)
+                    Console.WriteLine(s);
                 Console.WriteLine("Please enter your email address");
                 string email = Console.ReadLine();
                 Console.WriteLine("Please enter your email password");
