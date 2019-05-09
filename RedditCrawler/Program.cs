@@ -44,10 +44,16 @@ namespace RedditCrawler
         //Methods for interacting with Reddit, Email.
         #region Connectivity
 
-        //Method for sending email notification to user.
+        /// <summary>
+        /// Takes a string from the passing method, and uses <see cref="CheckFileExists(string)"/> and <see cref="ReadFile(string)"/> to retrieve
+        /// saved email credentials. These are then decoded using <see cref="DecodePassword(string)"/> and used to send a MailMessage object using 
+        /// SmtpClient to the user, informing them of a posted match. 
+        /// </summary>
+        /// <param name="result">Passed string for notification purposes.</param>
         void NotifyUser(string result)
         {
             Program p = new Program();
+
             //Confirms rcEmail.txt exists
             CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
             //Retrieves email credentials from rcEmail.txt
@@ -93,7 +99,16 @@ namespace RedditCrawler
             }
         }
 
-        //Method for retrieving posts from website.
+        /// <summary>
+        /// Takes a user name, password, and subreddit from calling method. Uses these to run <see cref="Reddit.GetSubreddit(string).New.Take(15)"/>
+        /// to retrieve posts from the specified subreddit. The titles of these are then passed to <paramref name="lstResultList"/> and returned.
+        /// </summary>
+        /// <param name="user">Passed Reddit username.</param>
+        /// <param name="password">Passed Reddit password.</param>
+        /// <param name="sub">Passed subreddit in string format.</param>
+        /// <returns>
+        ///     <param name="=lstResultList">Returns list of titles retrieved from subreddit.</param>
+        /// </returns>
         List<string> GetPosts(string user, string password, string sub)
         {
             Program p = new Program();
@@ -108,7 +123,7 @@ namespace RedditCrawler
                 //Retrieves title of 15 posts, adds it to a fresh List<string>
                 foreach (var post in subreddit.New.Take(15))
                 {
-                    lstResultList.Add(post.Title.ToString());               
+                    lstResultList.Add(post.Title.ToString());                             
                 }
                 //Returns list of post titles. 
                 return lstResultList;
@@ -125,7 +140,13 @@ namespace RedditCrawler
         //Methods for working with files
         #region HelperMethods
 
-        //Method for encoding password
+        /// <summary>
+        /// Takes user input string, converts it using UTF8, and returns the encoded password.
+        /// </summary>
+        /// <param name="password">String representing user's password</param>
+        /// <returns>
+        ///     <param name="=encodedPassword">, user's input password encoded using UTF8.</param>
+        /// </returns>
         private string EncodePassword(string password)
         {
             //Initialize byte array & encoded password field
@@ -145,7 +166,13 @@ namespace RedditCrawler
             return encodedPassword;
         }
 
-        //Method for decoding password from storage. 
+        /// <summary>
+        /// Reads encoded password from file, decrypts it, and returns it to calling method. 
+        /// </summary>
+        /// <param name="encodedPassword">String representing user's encodedpassword</param>
+        /// <returns>
+        ///     <param name="=decodedPassword">, user's original input password.</param>
+        /// </returns>
         private string DecodePassword(string encodedPassword)
         {
             Program p = new Program();
@@ -164,7 +191,11 @@ namespace RedditCrawler
             return decodedPassword;
         }
 
-        //Check if the file at the specified file path exists, creating one if not.
+        /// <summary>
+        /// Takes a filepath from the calling method, checks if the file exists at that path, 
+        /// and creates it if not. 
+        /// </summary>
+        /// <param name="filePath">String the file path to check for. </param>
         private void CheckFileExists(string filePath)
         {
             //Check if the file exists at the given file path
@@ -175,7 +206,13 @@ namespace RedditCrawler
             }
         }
 
-        //Reads all of the lines from the specified file and returns a list with all of them
+        /// <summary>
+        /// Takes a filepath from the calling method, checks if it exists, and reads the data from it. 
+        /// </summary>
+        /// <param name="filePath">String representing the filepath to read from.</param>
+        /// <returns>
+        ///     <param name="=lstRead">Returns list of lines read from text file at <paramref name="filePath"/></param>
+        /// </returns>
         private List<string> ReadFile(string filePath)
         {
             //List to append the lines of the file to
@@ -209,7 +246,12 @@ namespace RedditCrawler
             return null;
         }
 
-        //Writes contents of the provided list to the filepath, overwriting or appending according to bool append
+        /// <summary>
+        /// Takes a filepath from the calling method, check if it exists, and write input to the file. 
+        /// </summary>
+        /// <param name="filePath">String representing the file to write to</param>
+        /// <param name="list">List containing all items to write to <paramref name="filePath"/></param>
+        /// <param name="append">Boolean instructing the method to either append or overwrite the contents</param>
         private void WriteToFile(string filePath, List<string> list, bool append)
         {
             Program p = new Program();
@@ -234,7 +276,16 @@ namespace RedditCrawler
             }
         }
 
-        //Method for filtering out duplicates & reporting matches in GetPosts()
+        /// <summary>
+        /// Takes three lists from calling method, compares <paramref name="lstPosts"/> to <paramref name="lstSearchTerms"/> to remove non-matches, and then
+        /// compares to <paramref name="lstDuplicates"/> to check for duplicate entries, removing them as well. 
+        /// </summary>
+        /// <param name="lstPosts">List of retrieved posts to check against.<paramref name="lstSearchTerms"/> and <paramref name="lstDuplicates"/></param>
+        /// <param name="lstSearchTerms">List of user-specified search terms to search for.</param>
+        /// <param name="lstDuplicates">List of post titles the user has already been notified of.</param>
+        /// <returns>
+        ///     <param name="=lstPassedList">Returns the trimmed version of lstPosts, minus all duplicates and non-search matches.</param>
+        /// </returns>
         private List<string> NotificationList(List<string> lstPosts, List<string> lstSearchTerms, List<string> lstDuplicates)
         {
             List<string> lstPassedList = new List<string>();
@@ -277,7 +328,10 @@ namespace RedditCrawler
             return lstPassedList;
         }
 
-        //Method for logging error details to debug file and returning to menu.
+        /// <summary>
+        /// Takes a passed exception, and logs the details to local file DebugLog.txt
+        /// </summary>
+        /// <param name="e">Exception thrown in calling method. </param>
         private void DebugLog(Exception e)
         {
             Program p = new Program();
@@ -295,7 +349,15 @@ namespace RedditCrawler
 
         #endregion
 
-        //Continuous method for monitoring sub.
+        /// <summary>
+        /// Takes user reddit user name and password as input, confirms existence of all relevant text files (rcEmail.txt, rcLogin.txt, 
+        /// rcSearchCriteria.txt, and rcSubreddit.txt) and their contents, then retrieves 15 posts using <see cref="GetPosts(string, string, string)"/>
+        /// Once these posts have been retrieved, the method checks them against duplicates from rcSearchRecords.txt and matches from rcSearchCriteria.txt,
+        /// then uses <see cref="NotifyUser(string)"/> to notify the user of any matches. After this, all variables are cleared, the thread sleeps for 
+        /// 60,000 ticks, and runs again. 
+        /// </summary>
+        /// <param name="user">Reddit username</param>
+        /// <param name="password">Reddit password</param>
         private void Listen(string user, string password)
         {
             Program p = new Program();
@@ -305,6 +367,7 @@ namespace RedditCrawler
                 {
                     //Checks for valid entries in relevant text files, performs DebugLog() and exits environment on failure. 
                     #region criteriaCheck
+
                     //searchInput needs to be acquired from locally saved text file rcSearchCriteria.txt after being input, and will be used to filter the results
                     //If list is blank, user is notified to enter criteria from the main menu.
                     CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
@@ -337,7 +400,7 @@ namespace RedditCrawler
                     }
                     #endregion
 
-                    //gets list of 25 most recent posts from designated sub.
+                    //gets list of 15 most recent posts from designated sub.
                     List<string> lstResultList = new Program().GetPosts(user, password, sub);
                     List<string> lstPassedList = NotificationList(lstResultList, lstSearchInput, lstDuplicateList);                   
 
