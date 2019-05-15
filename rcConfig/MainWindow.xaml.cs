@@ -414,8 +414,11 @@ namespace rcConfig
         }
 
         /// <summary>
-        /// Indicates whether any network connection is available.
-        /// Filter connections below a specified speed, as well as virtual network cards.
+        /// Indicates whether any network connection is available. The default 
+        /// <see cref="NetworkInterface.GetIsNetworkAvailable()"/> can have some trouble with virtual 
+        /// cards, and does not handle filtering/discarding network availability based on speed. 
+        /// 
+        /// This method filters connections below a specified speed, as well as virtual network cards.
         /// </summary>
         /// <param name="minimumSpeed">The minimum speed required. Passing 0 will not filter connection using speed.</param>
         /// <returns>
