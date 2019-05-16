@@ -1,7 +1,9 @@
-﻿using System;
+﻿using RedditSharp;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -216,6 +218,125 @@ namespace rcListenLibrary
             lstError.Add(s);
             //Write error details to rcErrorLog.txt
             WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt", lstError, true);
+        }
+
+        /// <summary>
+        /// Takes user Reddit credentials, encrypts them using <see cref="EncodePassword(string)"/>, and saves them to a local text
+        /// file for future use. 
+        /// </summary>
+        /// <param name="user">String representing user's Reddit user name.</param>
+        /// <param name="password">String representing user's Reddit password</param>
+        /// <returns>
+        ///     <c>true</c> if login credentials are valid and successfully saved, otherwise <c>false</c>.
+        /// </returns>
+        public bool NewLogin(string user, string password)
+        {
+            rcConnectivity rcc = new rcConnectivity();
+            try
+            {
+                //Ensures rcLogin.txt exists
+                CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
+                List<string> credentials = new List<string>();
+
+                //Test login credentials, catching exception if var login fails
+                var reddit = new Reddit();
+                var login = reddit.LogIn(user, password);
+                credentials.Add(EncodePassword(user));
+                credentials.Add(EncodePassword(password));
+
+                //Now that the login has been successful, write the credentials to rcLogin.txt
+                WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt", credentials, false);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Takes subreddit details in string form, and saves them to a local text file for future use. 
+        /// </summary>
+        /// <param name="sub">Subreddit for RedditCrawler to monitor in string format</param>.
+        public void NewSub(string sub)
+        {
+            //Retrieves filepath of intended rcSubreddit.txt
+            string subFilePath = Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt";
+            try
+            {
+                //Ensures rcSubreddit.txt exists
+                CheckFileExists(subFilePath);
+                List<string> subList = new List<string>();
+                subList.Add(sub);
+                WriteToFile(subFilePath, subList, false);
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
+            }
+        }
+
+        /// <summary>
+        /// Takes user email credentials, encrypts them using <see cref="EncodePassword(string)"/>, and saves them to a local text
+        /// file for future use. 
+        /// </summary>
+        /// <param name="email">String representing user's email address</param>
+        /// <param name="pass">String representing user's email password</param>
+        /// <returns>
+        ///     <c>true</c> if credentials are valid and successfully saved, otherwise <c>false</c>.
+        /// </returns>
+        public bool NewEmail(string email, string pass)
+        {
+            //set the name of the file path that contains the information of the user
+            string emailFilePath = Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt";
+            try
+            {
+                //Ensures file exists
+                CheckFileExists(emailFilePath);
+                //Creates list with input credentials
+                List<string> subList = new List<string>();
+                subList.Add(EncodePassword(email));
+                subList.Add(EncodePassword(pass));
+
+                //Tests input credentials by sending a test email. 
+                SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+                SmtpServer.Port = 587;
+                SmtpServer.Credentials = new System.Net.NetworkCredential(email, pass);
+                SmtpServer.EnableSsl = true;
+                MailMessage mail = new MailMessage();
+                mail.From = new MailAddress(email); mail.To.Add(email);
+                mail.Subject = "Redditcrawler Email Test";
+                mail.Body = "Your RedditCrawler email has been successfully verified!";
+                SmtpServer.Send(mail);
+                WriteToFile(emailFilePath, subList, false);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Takes passed string and checks to confirm if it is in valid email format. 
+        /// </summary>
+        /// <param name="email">String containing user's email address</param>
+        /// <returns>
+        ///     <c>true</c> if email is in valid format, otherwise <c>false</c>.
+        /// </returns>
+        public bool IsEmailValid(string email)
+        {
+            try
+            {
+                MailAddress m = new MailAddress(email);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

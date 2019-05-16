@@ -214,5 +214,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\rcListenLibrary\rcListenLibrary.csproj">
+      <Project>{e465a0c7-45ef-4214-931b-8c9a8a88049e}</Project>
+      <Name>rcListenLibrary</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
