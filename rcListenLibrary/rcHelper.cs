@@ -320,6 +320,31 @@ namespace rcListenLibrary
         }
 
         /// <summary>
+        /// Handles saving of whether or not toast notifications are enabled through the UI
+        /// </summary>
+        /// <returns>
+        ///     <c>true</c> if toast notifications are enabled, otherwise <c>false</c>.
+        /// </returns>
+        public void ToggleToast(string toastStatus)
+        {
+            //set the name of the file path that contains the information of the user
+            string toastFilePath = Directory.GetCurrentDirectory().ToString() + "/rcToast.txt";
+            try
+            {
+                List<string> sList = new List<string>();
+                sList.Add(toastStatus);
+                CheckFileExists(toastFilePath);
+                WriteToFile(toastFilePath, sList, false);
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
+            }
+        }
+
+
+
+        /// <summary>
         /// Takes passed string and checks to confirm if it is in valid email format. 
         /// </summary>
         /// <param name="email">String containing user's email address</param>

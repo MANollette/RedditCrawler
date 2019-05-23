@@ -39,6 +39,14 @@ namespace rcConfig
             #region populate fields
             try
             {
+                //Toggle toast toggle button based on existing criteria
+                rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcToast.txt");
+                if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcToast.txt").Count > 0)
+                {
+                    if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcToast.txt")[0] == "yes")
+                        tbtnToast.IsChecked = true;
+                }
+
                 //Populate search criteria contents with existing criteria
                 rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
                 if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt").Count > 0)
@@ -335,13 +343,23 @@ namespace rcConfig
         /// </summary>
         private void tbtnToggleToast_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as ToggleButton).IsChecked ?? false)
+            rcHelper rc = new rcHelper();
+            try
             {
-                MessageBox.Show("yes");
+                if ((sender as ToggleButton).IsChecked ?? false)
+                {
+                    rc.ToggleToast("yes");
+                    MessageBox.Show("Toast notifications are now enabled");
+                }
+                else
+                {
+                    rc.ToggleToast("no");
+                    MessageBox.Show("Toast notifications are now disabled");
+                }
             }
-            else
+            catch(Exception ex)
             {
-                MessageBox.Show("no");
+                rc.DebugLog(ex);
             }
         }
         #endregion

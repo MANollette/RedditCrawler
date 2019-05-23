@@ -89,7 +89,7 @@
         <Button x:Name="btnSubmitLogin" Content="Submit Login" FontSize="14" HorizontalAlignment="Left" Margin="257,229,0,0" VerticalAlignment="Top" Width="132" Click="btnSubmitLogin_click"/>
         <Button x:Name="btnSubmitEmail" Content="Submit Email" FontSize="14" HorizontalAlignment="Left" Margin="257,353,0,0" VerticalAlignment="Top" Width="132" Click="btnSubmitEmail_click"/>
         <ToggleButton 
-        Content="Toast Notifications" Click="tbtnToggleToast_Click"
+        Content="Toast Notifications" Click="tbtnToggleToast_Click" Name="tbtnToast"
             Style="{StaticResource TBStyle1}" Margin="541,327,74,60"/>
     </Grid>
 </Window>
