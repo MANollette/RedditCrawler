@@ -329,6 +329,8 @@ namespace rcListenLibrary
         {
             //set the name of the file path that contains the information of the user
             string toastFilePath = Directory.GetCurrentDirectory().ToString() + "/rcToast.txt";
+
+            //Write toastStatus to rcToast.txt
             try
             {
                 List<string> sList = new List<string>();
@@ -341,8 +343,6 @@ namespace rcListenLibrary
                 DebugLog(ex);
             }
         }
-
-
 
         /// <summary>
         /// Takes passed string and checks to confirm if it is in valid email format. 

@@ -70,8 +70,6 @@ namespace RedditCrawler
 
         }
 
-
-
         /// <summary>
         /// Takes user reddit user name and password as input, confirms existence of all relevant text files (rcEmail.txt, rcLogin.txt, 
         /// rcSearchCriteria.txt, and rcSubreddit.txt) and their contents, then retrieves 15 posts using <see cref="GetPosts(string, string, string)"/>
@@ -170,6 +168,12 @@ namespace RedditCrawler
 
         //Methods for displaying toasts, setting up shortcut, and toastevents. 
         #region ToastHandlingMethods
+        /// <summary>
+        /// Displays a text-based Toast Message
+        /// </summary>
+        /// <param name="appId">string-based application ID for handling Toast messages</param>
+        /// <param name="title">Title of the toast message to be displayed</param>
+        /// <param name="message">Message for the toast to contain</param>
         static void ShowTextToast(string appId, string title, string message)
         {
             Windows.Data.Xml.Dom.XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(
@@ -194,6 +198,13 @@ namespace RedditCrawler
             ToastNotificationManager.CreateToastNotifier(appId).Show(toast);
         }
 
+        /// <summary>
+        /// Displays an image-based Toast Message
+        /// </summary>
+        /// <param name="appId">string-based application ID for handling Toast messages</param>
+        /// <param name="title">Title of the toast message to be displayed</param>
+        /// <param name="message">Message for the toast to contain</param>
+        /// <param name="image">Image to display in the toast message</param>
         static void ShowImageToast(string appId, string title, string message, string image)
         {
             Windows.Data.Xml.Dom.XmlDocument toastXml = ToastNotificationManager.GetTemplateContent(
@@ -223,13 +234,22 @@ namespace RedditCrawler
             ToastNotificationManager.CreateToastNotifier(appId).Show(toast);
         }
 
+        /// <summary>
+        /// Local class for handling toast activation, dismissal, & failure
+        /// </summary>
         class ToastEvents
         {
+            /// <summary>
+            /// Logs the activation of the toast to the ToastNotification object.
+            /// </summary>
             internal void ToastActivated(ToastNotification sender, object e)
             {
                 Console.WriteLine("User activated the toast");
             }
 
+            /// <summary>
+            /// Logs the dismissal & reason for dismissal of the toast to the ToastNotification object.
+            /// </summary>
             internal void ToastDismissed(ToastNotification sender, ToastDismissedEventArgs e)
             {
                 String outputText = "";
@@ -248,24 +268,35 @@ namespace RedditCrawler
 
                 Console.WriteLine(outputText);
             }
-
+            
+            /// <summary>
+            /// Logs the encounter of an error to the ToastNotification object.
+            /// </summary>
             internal void ToastFailed(ToastNotification sender, ToastFailedEventArgs e)
             {
                 Console.WriteLine("The toast encountered an error.");
             }
         }
 
+        /// <summary>
+        /// Class for handling the creation of a windows shortcut in order to enable toast notifications. 
+        /// </summary>
         static class ShortCutCreator
         {
-            // In order to display toasts, a desktop application must have
-            // a shortcut on the Start menu.
-            // Also, an AppUserModelID must be set on that shortcut.
+            // In order to display toasts, a desktop application must have a shortcut on the Start menu.
+            // Also, an AppUserModelID must be set on that shortcut (static string appID).
             // The shortcut should be created as part of the installer.
             // The following code shows how to create
             // a shortcut and assign an AppUserModelID using Windows APIs.
             // You must download and include the Windows API Code Pack
             // for Microsoft .NET Framework for this code to function
 
+            /// <summary>
+            /// Creates the shortcut within the specified folder path. 
+            /// </summary>
+            /// <param name="appId">Identifier for the application</param>
+            /// <param name="appName">Name of the application</param>
+            /// <returns><c>true</c> if the shortcut was successfully created & installed, otherwise <c>false</c></returns>
             internal static bool TryCreateShortcut(string appId, string appName)
             {
                 String shortcutPath = Environment.GetFolderPath(
@@ -279,6 +310,11 @@ namespace RedditCrawler
                 return false;
             }
 
+            /// <summary>
+            /// Installs the shortcut in the provided folder path. 
+            /// </summary>
+            /// <param name="appId">Identifier for the application</param>
+            /// <param name="shortcutPath">Folder path for installation</param>
             static void InstallShortcut(string appId, string shortcutPath)
             {
                 // Find the path to the current executable
@@ -305,6 +341,10 @@ namespace RedditCrawler
                 VerifySucceeded(newShortcutSave.Save(shortcutPath, true));
             }
 
+            /// <summary>
+            /// Internal method for verifying the success or failure of shortcut installation
+            /// </summary>
+            /// <param name="hresult"></param>
             static void VerifySucceeded(UInt32 hresult)
             {
                 if (hresult <= 1)

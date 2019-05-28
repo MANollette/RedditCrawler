@@ -115,7 +115,7 @@ namespace rcConfig
             rcHelper rc = new rcHelper();
             try
             {
-                //initialize all variables from subreddit field
+                //Initialize all variables from subreddit field
                 #region variable_Initialization
                 //Initialize subreddit variable
                 string sub = null;
@@ -144,6 +144,7 @@ namespace rcConfig
                 }
                 #endregion
 
+                //Write details of text boxes to rcSubreddit.txt, displaying message if it was accepted.
                 if (sub != null)
                 {
                     rc.NewSub(sub);
@@ -344,6 +345,8 @@ namespace rcConfig
         private void tbtnToggleToast_Click(object sender, RoutedEventArgs e)
         {
             rcHelper rc = new rcHelper();
+
+            //Handles toggling of toast notifications through rcHelper ToggleToast method.
             try
             {
                 if ((sender as ToggleButton).IsChecked ?? false)
