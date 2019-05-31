@@ -19,6 +19,8 @@ namespace rcListenLibrary
     /// </remarks>
     public class rcConnectivity
     {
+        static string txtFilePath = "/rcData.txt";
+
         /// <summary>
         /// Takes a string from the passing method, and uses <see cref="CheckFileExists(string)"/> and <see cref="ReadFile(string)"/> to retrieve
         /// saved email credentials. These are then decoded using <see cref="DecodePassword(string)"/> and used to send a MailMessage object using 
@@ -29,42 +31,53 @@ namespace rcListenLibrary
         {
             rcHelper rc = new rcHelper();
 
-            //Confirms rcEmail.txt exists
-            rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
-            //Retrieves email credentials from rcEmail.txt
-            List<string> emailCredentials = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
-            //If credentials exist, continue. 
-            if (emailCredentials.Count > 0)
+            //Confirms rcData.txt exists
+            rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+            //Retrieves email credentials from rcData.txt
+            List<string> dataList = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+            string email = null;
+            string password = null;            
+            if (dataList.Count > 0)
             {
-                string email = rc.DecodePassword(emailCredentials[0]);
-                string password = rc.DecodePassword(emailCredentials[1]);
-
-                //Send details of post to the user in an email.
-                try
+                for(int i = 0; i < dataList.Count; i++)
                 {
-                    //Initialize mail object & client
-                    MailMessage mail = new MailMessage();
-                    SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
-
-                    //Adds details to mail object
-                    mail.From = new MailAddress(email);
-                    mail.To.Add(email);
-                    mail.Subject = "New Reddit Post!";
-                    mail.Body = "The following post was created " + DateTime.Now.ToShortDateString()
-                        + ":\n\n" + result;
-
-                    //Sets port, credentials, SSL, and sends mail object. 
-                    SmtpServer.Port = 587;
-                    SmtpServer.Credentials = new System.Net.NetworkCredential(email, password);
-                    SmtpServer.EnableSsl = true;
-                    SmtpServer.Send(mail);
-                    Console.WriteLine("mail Sent");
-                    SmtpServer.Dispose();
-                    mail.Dispose();
+                    if (dataList[i] == "EMAIL")
+                    {
+                        email = rc.DecodePassword(dataList[i + 1]);
+                        password = rc.DecodePassword(dataList[i + 2]);
+                    }
                 }
-                catch (Exception ex)
+
+                //If credentials exist, continue. 
+                if (email != null && password != null)
                 {
-                    rc.DebugLog(ex);
+                    //Send details of post to the user in an email.
+                    try
+                    {
+                        //Initialize mail object & client
+                        MailMessage mail = new MailMessage();
+                        SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+
+                        //Adds details to mail object
+                        mail.From = new MailAddress(email);
+                        mail.To.Add(email);
+                        mail.Subject = "New Reddit Post!";
+                        mail.Body = "The following post was created " + DateTime.Now.ToShortDateString()
+                            + ":\n\n" + result;
+
+                        //Sets port, credentials, SSL, and sends mail object. 
+                        SmtpServer.Port = 587;
+                        SmtpServer.Credentials = new System.Net.NetworkCredential(email, password);
+                        SmtpServer.EnableSsl = true;
+                        SmtpServer.Send(mail);
+                        Console.WriteLine("mail Sent");
+                        SmtpServer.Dispose();
+                        mail.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        rc.DebugLog(ex);
+                    }
                 }
             }
             else

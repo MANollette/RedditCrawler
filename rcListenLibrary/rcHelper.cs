@@ -18,6 +18,8 @@ namespace rcListenLibrary
     /// </remarks>
     public class rcHelper
     {
+        static string txtFilePath = "/rcData.txt";
+
         /// <summary>
         /// Takes user input string, converts it using UTF8, and returns the encoded password.
         /// </summary>
@@ -235,17 +237,24 @@ namespace rcListenLibrary
             try
             {
                 //Ensures rcLogin.txt exists
-                CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
-                List<string> credentials = new List<string>();
-
+                CheckFileExists(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+                List<string> dataList = ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+                for (int i = 0; i < dataList.Count; i++)
+                {
+                    if (dataList[i] == "LOGIN")
+                    {
+                        dataList.RemoveRange(i, 3);
+                    }
+                }
                 //Test login credentials, catching exception if var login fails
                 var reddit = new Reddit();
                 var login = reddit.LogIn(user, password);
-                credentials.Add(EncodePassword(user));
-                credentials.Add(EncodePassword(password));
+                dataList.Add("LOGIN");
+                dataList.Add(EncodePassword(user));
+                dataList.Add(EncodePassword(password));
 
                 //Now that the login has been successful, write the credentials to rcLogin.txt
-                WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt", credentials, false);
+                WriteToFile(Directory.GetCurrentDirectory().ToString() + txtFilePath, dataList, false);
                 return true;
             }
             catch (Exception ex)
@@ -262,14 +271,20 @@ namespace rcListenLibrary
         public void NewSub(string sub)
         {
             //Retrieves filepath of intended rcSubreddit.txt
-            string subFilePath = Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt";
+            string subFilePath = Directory.GetCurrentDirectory().ToString() + txtFilePath;
             try
             {
                 //Ensures rcSubreddit.txt exists
                 CheckFileExists(subFilePath);
-                List<string> subList = new List<string>();
-                subList.Add(sub);
-                WriteToFile(subFilePath, subList, false);
+                List<string> dataList = ReadFile(subFilePath);
+                for(int i = 0; i < dataList.Count; i++)
+                {
+                    if (dataList[i] == "SUBREDDIT")
+                        dataList.RemoveRange(i, 2);
+                }
+                dataList.Add("SUBREDDIT");
+                dataList.Add(sub);
+                WriteToFile(subFilePath, dataList, false);
             }
             catch (Exception ex)
             {
@@ -289,15 +304,23 @@ namespace rcListenLibrary
         public bool NewEmail(string email, string pass)
         {
             //set the name of the file path that contains the information of the user
-            string emailFilePath = Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt";
+            string emailFilePath = Directory.GetCurrentDirectory().ToString() + txtFilePath;
             try
             {
                 //Ensures file exists
                 CheckFileExists(emailFilePath);
+
+                List<string> dataList = ReadFile(emailFilePath);
+                for (int i = 0; i < dataList.Count; i++)
+                {
+                    if (dataList[i] == "EMAIL")
+                        dataList.RemoveRange(i, 3);
+                }
+
                 //Creates list with input credentials
-                List<string> subList = new List<string>();
-                subList.Add(EncodePassword(email));
-                subList.Add(EncodePassword(pass));
+                dataList.Add("EMAIL");
+                dataList.Add(EncodePassword(email));
+                dataList.Add(EncodePassword(pass));
 
                 //Tests input credentials by sending a test email. 
                 SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
@@ -309,7 +332,7 @@ namespace rcListenLibrary
                 mail.Subject = "Redditcrawler Email Test";
                 mail.Body = "Your RedditCrawler email has been successfully verified!";
                 SmtpServer.Send(mail);
-                WriteToFile(emailFilePath, subList, false);
+                WriteToFile(emailFilePath, dataList, false);
                 return true;
             }
             catch (Exception ex)
@@ -328,14 +351,20 @@ namespace rcListenLibrary
         public void ToggleToast(string toastStatus)
         {
             //set the name of the file path that contains the information of the user
-            string toastFilePath = Directory.GetCurrentDirectory().ToString() + "/rcToast.txt";
+            string toastFilePath = Directory.GetCurrentDirectory().ToString() + txtFilePath;
 
             //Write toastStatus to rcToast.txt
             try
             {
-                List<string> sList = new List<string>();
-                sList.Add(toastStatus);
                 CheckFileExists(toastFilePath);
+                List<string> sList = ReadFile(toastFilePath);
+                for(int i = 0; i < sList.Count; i++)
+                {
+                    if (sList[i] == "TOAST")
+                        sList.RemoveRange(i, 2);
+                }
+                sList.Add("TOAST");
+                sList.Add(toastStatus);                
                 WriteToFile(toastFilePath, sList, false);
             }
             catch (Exception ex)

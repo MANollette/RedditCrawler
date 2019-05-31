@@ -24,6 +24,7 @@ namespace RedditCrawler
 {
     class Program
     {
+        static string txtFilePath = "/rcData.txt";
         static string appID = "FightingMongooses.RedditCrawler";
 
         static void Main(string[] args)
@@ -43,8 +44,8 @@ namespace RedditCrawler
             }
 
             //Validates login, logs failures. 
-            rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
-            List<string> loginCheck = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
+            rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+            List<string> loginCheck = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
             if (loginCheck.Count() == 0 || loginCheck == null)
             {
                 Exception e = new Exception("Login failed. Please configure your settings in rcConfig.");
@@ -55,12 +56,25 @@ namespace RedditCrawler
             {
                 try
                 {
+                    string user = null;
+                    string password = null;
                     //If login check succeeds, provide login credentials for Listen() method.
-                    List<string> credentials = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
-                    string user = rc.DecodePassword(credentials[0]);
-                    string password = rc.DecodePassword(credentials[1]);
-                    p.Listen(user, password);
-
+                    List<string> credentials = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+                    for(int i = 0; i < credentials.Count; i++)
+                    {
+                        if (credentials[i] == "LOGIN")
+                        {
+                            user = rc.DecodePassword(credentials[i + 1]);
+                            password = rc.DecodePassword(credentials[i + 2]);
+                        }
+                    }
+                    if (user != null && password != null)
+                        p.Listen(user, password).Wait();
+                    else
+                    {
+                        rc.DebugLog(new Exception("Please ensure a valid username and password are configured"));
+                        Environment.Exit(0);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -79,7 +93,7 @@ namespace RedditCrawler
         /// </summary>
         /// <param name="user">Reddit username</param>
         /// <param name="password">Reddit password</param>
-        private void Listen(string user, string password)
+        private async Task Listen(string user, string password)
         {
             rcHelper rc = new rcHelper();
             rcConnectivity rcon = new rcConnectivity();
@@ -102,42 +116,54 @@ namespace RedditCrawler
                         System.Environment.Exit(0);
                     }
 
-                    //subreddit needs to be acquired from locally saved text file rcSubreddit.txt
-                    rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt");
-                    string sub = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt").First();
-                    if (sub.Count() < 4)
-                        System.Environment.Exit(0);
-
+                    //Retrieve status on toast notifications from file. 
+                    bool toastStatus = false;
+                    string sub = null;
+                    bool subEx, emailEx;
+                    subEx = emailEx = false;
+                    
+                    List<string> dataList = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+                    if (dataList.Count > 0)
+                    {
+                        for (int i = 0; i < dataList.Count; i++)
+                        {
+                            if (dataList[i] == "TOAST")
+                            {
+                                if (dataList[i + 1] == "yes")
+                                    toastStatus = true;
+                            }
+                            if (dataList[i] == "SUBREDDIT")
+                            {
+                                sub = dataList[i + 1];
+                                subEx = true;
+                            }
+                            if (dataList[i] == "EMAIL")
+                                emailEx = true;
+                        }
+                    }
+                    if (subEx == false)
+                    {
+                        rc.DebugLog(new Exception("Please check your subreddit existence & formatting."));
+                        Environment.Exit(0);
+                    }
+                    if (emailEx == false)
+                    {
+                        rc.DebugLog(new Exception("Please check your email credentials existence & formatting."));
+                        Environment.Exit(0);
+                    }
+                    
                     //List should also be acquired from a locally saved text file, and will consist of
                     //all previous entries the user has already been notified of. 
                     rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSearchRecords.txt");
-                    List<string> lstDuplicateList = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchRecords.txt");
-
-                    //Double checks that rcEmail.txt exists and is not null
-                    rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
-                    if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt").Count < 2)
-                    {
-                        Exception ex = new Exception("You must ensure rcEmail.txt has a valid email address & password");
-                        rc.DebugLog(ex);
-                        System.Environment.Exit(0);
-                    }
+                    List<string> lstDuplicateList = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchRecords.txt");             
                     #endregion
 
                     //gets list of 15 most recent posts from designated sub.
                     List<string> lstResultList = rcon.GetPosts(user, password, sub);
-                    List<string> lstPassedList = rc.NotificationList(lstResultList, lstSearchInput, lstDuplicateList);
-
-                    //Retrieve status on toast notifications from file. 
-                    bool toastStatus = false;
-                    List<string> toastList = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcToast.txt");
-                    if (toastList.Count == 1)
-                    {
-                        if (toastList[0] == "yes")
-                            toastStatus = true;
-                    }
+                    List<string> lstPassedList = rc.NotificationList(lstResultList, lstSearchInput, lstDuplicateList);                   
 
                     //Now that the list has been trimmed, notify user of all results
-                    if (lstPassedList.Count > 1)
+                    if (lstPassedList.Count > 0)
                     {
                         rc.WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchRecords.txt", lstPassedList, true);
                         for (int i = 0; i < lstPassedList.Count(); i++)
@@ -148,6 +174,7 @@ namespace RedditCrawler
                             {
                                 ShowTextToast(appID, "New Reddit Post!", lstPassedList[i]);
                             }
+                            await (Task.Delay(5000));
                         }
                     }
 
@@ -156,7 +183,7 @@ namespace RedditCrawler
                     lstPassedList.Clear();
                     lstDuplicateList.Clear();
                     lstSearchInput.Clear();
-                    Thread.Sleep(60000);
+                    await Task.Delay(180000);
                 }
                 catch (Exception ex)
                 {

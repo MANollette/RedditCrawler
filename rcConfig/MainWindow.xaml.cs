@@ -30,6 +30,8 @@ namespace rcConfig
     /// </summary>
     public partial class MainWindow : Window
     {
+        static string txtFilePath = "/rcData.txt";
+
         public MainWindow()
         {
             InitializeComponent();
@@ -40,11 +42,32 @@ namespace rcConfig
             try
             {
                 //Toggle toast toggle button based on existing criteria
-                rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcToast.txt");
-                if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcToast.txt").Count > 0)
+                rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+                List<string> dataList = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
+                if (dataList.Count > 0)
                 {
-                    if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcToast.txt")[0] == "yes")
-                        tbtnToast.IsChecked = true;
+                    for (int i = 0; i < dataList.Count; i++)
+                    {
+                        if (dataList[i] == "TOAST")
+                        {
+                            if (dataList[i + 1] == "yes")
+                                tbtnToast.IsChecked = true;
+                        }
+                        if (dataList[i] == "SUBREDDIT")
+                        {
+                            txtSubreddit.Text = dataList[i + 1];
+                        }
+                        if (dataList[i] == "EMAIL")
+                        {
+                            txtEmail.Text = rc.DecodePassword(dataList[i + 1]);
+                            pwdEmail.Password = rc.DecodePassword(dataList[i + 2]);
+                        }
+                        if (dataList[i] == "LOGIN")
+                        {
+                            txtRedditLogin.Text = rc.DecodePassword(dataList[i + 1]);
+                            pwdReddit.Password = rc.DecodePassword(dataList[i + 2]);
+                        }
+                    }
                 }
 
                 //Populate search criteria contents with existing criteria
@@ -59,42 +82,7 @@ namespace rcConfig
                             rtfSearchTerms.AppendText(s + "\n");
                         }
                     }
-                }
-            
-                //Populate subreddit with existing sub to monitor
-                rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt");
-                if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt").Count != 0)
-                {
-                    string sub = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSubreddit.txt").First();
-                    if (sub.Count() > 3)
-                    {
-                        txtSubreddit.Text = sub;
-                    }
-                }
-
-                //Populate email field with existing email. 
-                rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
-                if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt").Count != 0)
-                {
-                    List<string> emailCredentials = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcEmail.txt");
-                    if (emailCredentials.Count > 1)
-                    {
-                        txtEmail.Text = rc.DecodePassword(emailCredentials[0]);
-                        pwdEmail.Password = rc.DecodePassword(emailCredentials[1]);
-                    }
-                }
-
-                //Populate login fields with existing credentials
-                rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
-                if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt").Count != 0)
-                {
-                    List<string> redditCredentials = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcLogin.txt");
-                    if (redditCredentials.Count > 1)
-                    {
-                        txtRedditLogin.Text = rc.DecodePassword(redditCredentials[0]);
-                        pwdReddit.Password = rc.DecodePassword(redditCredentials[1]);
-                    }
-                }
+                }           
             }
             catch(Exception ex)
             {
