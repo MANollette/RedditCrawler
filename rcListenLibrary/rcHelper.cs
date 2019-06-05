@@ -1,4 +1,5 @@
-﻿using RedditSharp;
+﻿using Newtonsoft.Json;
+using RedditSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,7 +19,7 @@ namespace rcListenLibrary
     /// </remarks>
     public class rcHelper
     {
-        static string txtFilePath = "/rcData.txt";
+        static string jsonFilePath = "/rcData.json";
 
         /// <summary>
         /// Takes user input string, converts it using UTF8, and returns the encoded password.
@@ -69,87 +70,32 @@ namespace rcListenLibrary
         }
 
         /// <summary>
-        /// Takes a filepath from the calling method, checks if the file exists at that path, 
-        /// and creates it if not. 
-        /// </summary>
-        /// <param name="filePath">String the file path to check for. </param>
-        public void CheckFileExists(string filePath)
-        {
-            //Check if the file exists at the given file path
-            if (!File.Exists(filePath))
-            {
-                //If not, create it
-                File.Create(filePath).Dispose();
-            }
-        }
-
-        /// <summary>
         /// Takes a filepath from the calling method, checks if it exists, and reads the data from it. 
         /// </summary>
         /// <param name="filePath">String representing the filepath to read from.</param>
         /// <returns>
         ///     <param name="=lstRead">Returns list of lines read from text file at <paramref name="filePath"/></param>
         /// </returns>
-        public List<string> ReadFile(string filePath)
+        public RCDetails GetJson(string filePath)
         {
-            //List to append the lines of the file to
-            List<string> lstRead = new List<string>();
-
             try
             {
-                //Confirms file exists, creates it if not. 
-                CheckFileExists(filePath);
+                //Confirms file exists
+                bool b = File.Exists(Directory.GetCurrentDirectory().ToString() + filePath);
 
-                //Using statement to handle the StreamReader
-                using (StreamReader sr = new StreamReader(filePath))
+                if (b == true)
                 {
-                    //String to hold one line from file
-                    string line;
-
-                    //Loops through the file and ends when the end of the file is reached
-                    while ((line = sr.ReadLine()) != null)
-                    {
-                        lstRead.Add(line);
-                    }
-                    sr.Close();
+                    var json = File.ReadAllText(Directory.GetCurrentDirectory().ToString() + filePath);
+                    RCDetails parsedDetails = JsonConvert.DeserializeObject<RCDetails>(json);
+                    return parsedDetails;
                 }
-                //return list with appended lines  
-                return lstRead;
+                else return null;
             }
             catch (Exception ex)
             {
                 DebugLog(ex);
             }
             return null;
-        }
-
-        /// <summary>
-        /// Takes a filepath from the calling method, check if it exists, and write input to the file. 
-        /// </summary>
-        /// <param name="filePath">String representing the file to write to</param>
-        /// <param name="list">List containing all items to write to <paramref name="filePath"/></param>
-        /// <param name="append">Boolean instructing the method to either append or overwrite the contents</param>
-        public void WriteToFile(string filePath, List<string> list, bool append)
-        {
-            try
-            {
-                //Ensures filePath exists
-                CheckFileExists(filePath);
-                using (StreamWriter sw = new StreamWriter(filePath, append))
-                {
-                    //Loop through each line in list
-                    foreach (string line in list)
-                    {
-                        sw.WriteLine(line);
-                    }
-                    sw.Flush();
-                    sw.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                DebugLog(ex);
-            }
         }
 
         /// <summary>
@@ -162,9 +108,10 @@ namespace rcListenLibrary
         /// <returns>
         ///     <param name="=lstPassedList">Returns the trimmed version of lstPosts, minus all duplicates and non-search matches.</param>
         /// </returns>
-        public List<string> NotificationList(List<string> lstPosts, List<string> lstSearchTerms, List<string> lstDuplicates)
+        public Tuple<List<string>, List<string>> NotificationList(List<string> lstPosts, List<string> lstUrl, List<string> lstSearchTerms, List<string> lstDuplicates)
         {
             List<string> lstPassedList = new List<string>();
+            List<string> lstUrlUpdated = new List<string>();
             //Add posts that match search criteria to lstPassedList
             //Loop through provided post list
             for (int i = lstPosts.Count - 1; i >= 0; --i)
@@ -176,6 +123,7 @@ namespace rcListenLibrary
                     if (lstPosts[i].ToLower().Contains(lstSearchTerms[i2].ToLower()))
                     {
                         lstPassedList.Add(lstPosts[i]);
+                        lstUrlUpdated.Add(lstUrl[i]);
                     }
                 }
             }
@@ -184,24 +132,28 @@ namespace rcListenLibrary
             lstPassedList = lstPassedList.Distinct().ToList();
 
             //cycle through the list of already-posted results from lstDuplicates & remove matches
-            if (lstPassedList.Count > 0 && lstDuplicates.Count > 0)
+            if (lstDuplicates != null)
             {
-                //Loop through all existing search records
-                for (int i = 0; i < lstDuplicates.Count; ++i)
+                if (lstPassedList.Count > 0 && lstDuplicates.Count > 0)
                 {
-                    //Loop through all passed list criteria for each existing search record
-                    for (int i2 = 0; i2 < lstPassedList.Count; ++i2)
+                    //Loop through all existing search records
+                    for (int i = 0; i < lstDuplicates.Count; ++i)
                     {
-                        //If there is a match, the user has already been notified of this post; remove it. 
-                        if (lstDuplicates[i].ToLower() == lstPassedList[i2].ToLower())
+                        //Loop through all passed list criteria for each existing search record
+                        for (int i2 = 0; i2 < lstPassedList.Count; ++i2)
                         {
-                            lstPassedList.RemoveAt(i2);
+                            //If there is a match, the user has already been notified of this post; remove it. 
+                            if (lstDuplicates[i].ToLower() == lstPassedList[i2].ToLower())
+                            {
+                                lstPassedList.RemoveAt(i2);
+                                lstUrlUpdated.RemoveAt(i2);
+                            }
                         }
                     }
                 }
             }
             //Return filtered list
-            return lstPassedList;
+            return Tuple.Create(lstPassedList, lstUrlUpdated);
         }
 
         /// <summary>
@@ -211,15 +163,32 @@ namespace rcListenLibrary
         public void DebugLog(Exception e)
         {
             //Ensure error log exists.
-            CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt");
-            List<string> lstError = new List<string>();
+            string filePath = Directory.GetCurrentDirectory().ToString() + "/rcDebugLog.txt";
             //Initialize error details for writing to rcErrorLog.txt
             string s = "Error occurred: " + DateTime.Now.ToShortDateString() + "\nSource: " + e.Source + "\nStack trace: " + e.StackTrace
                 + "\nTarget site: " + e.TargetSite + "\nData: " + e.Data + "\nMessage: " + e.Message;
-            Console.WriteLine(s);
-            lstError.Add(s);
             //Write error details to rcErrorLog.txt
-            WriteToFile(Directory.GetCurrentDirectory().ToString() + "/rcErrorLog.txt", lstError, true);
+            if (!File.Exists(filePath))
+                File.Create(filePath).Dispose();
+            
+            using (StreamWriter sw = new StreamWriter(filePath, true))
+            {
+                sw.Write(s);
+                sw.Flush();
+                sw.Close();
+            }
+        }
+
+        /// <summary>
+        /// Takes an instance of the RCDetails class, serializes it & saves it as a Json object
+        /// </summary>
+        /// <param name="rcd">Instance of classe detailing all saved information</param>
+        public void WriteToFile(RCDetails rcd)
+        {
+            string JSONresult = JsonConvert.SerializeObject(rcd, Formatting.Indented);
+            if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
+                File.Delete(Directory.GetCurrentDirectory().ToString() + jsonFilePath);
+            File.WriteAllText(Directory.GetCurrentDirectory().ToString() + jsonFilePath, JSONresult);
         }
 
         /// <summary>
@@ -233,28 +202,20 @@ namespace rcListenLibrary
         /// </returns>
         public bool NewLogin(string user, string password)
         {
-            rcConnectivity rcc = new rcConnectivity();
             try
             {
-                //Ensures rcLogin.txt exists
-                CheckFileExists(Directory.GetCurrentDirectory().ToString() + txtFilePath);
-                List<string> dataList = ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
-                for (int i = 0; i < dataList.Count; i++)
+                RCDetails json = GetJson(jsonFilePath);
+                if (json == null)
                 {
-                    if (dataList[i] == "LOGIN")
-                    {
-                        dataList.RemoveRange(i, 3);
-                    }
+                    json = new RCDetails();
+                    json.rLogin = EncodePassword(user);
+                    json.rPass = EncodePassword(password);
+                    WriteToFile(json);
+                    return false;
                 }
-                //Test login credentials, catching exception if var login fails
-                var reddit = new Reddit();
-                var login = reddit.LogIn(user, password);
-                dataList.Add("LOGIN");
-                dataList.Add(EncodePassword(user));
-                dataList.Add(EncodePassword(password));
-
-                //Now that the login has been successful, write the credentials to rcLogin.txt
-                WriteToFile(Directory.GetCurrentDirectory().ToString() + txtFilePath, dataList, false);
+                json.rLogin = EncodePassword(user);
+                json.rPass = EncodePassword(password);
+                WriteToFile(json);
                 return true;
             }
             catch (Exception ex)
@@ -270,21 +231,13 @@ namespace rcListenLibrary
         /// <param name="sub">Subreddit for RedditCrawler to monitor in string format</param>.
         public void NewSub(string sub)
         {
-            //Retrieves filepath of intended rcSubreddit.txt
-            string subFilePath = Directory.GetCurrentDirectory().ToString() + txtFilePath;
             try
             {
-                //Ensures rcSubreddit.txt exists
-                CheckFileExists(subFilePath);
-                List<string> dataList = ReadFile(subFilePath);
-                for(int i = 0; i < dataList.Count; i++)
-                {
-                    if (dataList[i] == "SUBREDDIT")
-                        dataList.RemoveRange(i, 2);
-                }
-                dataList.Add("SUBREDDIT");
-                dataList.Add(sub);
-                WriteToFile(subFilePath, dataList, false);
+                RCDetails json = GetJson(jsonFilePath);
+                if (json == null)
+                    json = new RCDetails();
+                json.sub = sub;
+                WriteToFile(json);
             }
             catch (Exception ex)
             {
@@ -303,25 +256,25 @@ namespace rcListenLibrary
         /// </returns>
         public bool NewEmail(string email, string pass)
         {
-            //set the name of the file path that contains the information of the user
-            string emailFilePath = Directory.GetCurrentDirectory().ToString() + txtFilePath;
+            RCDetails json = GetJson(jsonFilePath);
+            bool ret = true;
+            try
+            {                    
+                if (json == null)
+                {
+                    json = new RCDetails();
+                    ret = false;
+                }
+                json.email = EncodePassword(email);
+                json.ePass = EncodePassword(pass);
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
+                return false;
+            }
             try
             {
-                //Ensures file exists
-                CheckFileExists(emailFilePath);
-
-                List<string> dataList = ReadFile(emailFilePath);
-                for (int i = 0; i < dataList.Count; i++)
-                {
-                    if (dataList[i] == "EMAIL")
-                        dataList.RemoveRange(i, 3);
-                }
-
-                //Creates list with input credentials
-                dataList.Add("EMAIL");
-                dataList.Add(EncodePassword(email));
-                dataList.Add(EncodePassword(pass));
-
                 //Tests input credentials by sending a test email. 
                 SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
                 SmtpServer.Port = 587;
@@ -332,13 +285,33 @@ namespace rcListenLibrary
                 mail.Subject = "Redditcrawler Email Test";
                 mail.Body = "Your RedditCrawler email has been successfully verified!";
                 SmtpServer.Send(mail);
-                WriteToFile(emailFilePath, dataList, false);
-                return true;
+                WriteToFile(json);
+                return ret;
             }
             catch (Exception ex)
             {
                 DebugLog(ex);
                 return false;
+            }
+        }
+
+        ///<summary>
+        ///Takes search criteria as a List, and appends it to the json object
+        /// </summary>
+        /// <param name="sr">List containing all user's search criteria separated into individual strings</param>
+        public void NewSearchCriteria(List<string> sr)
+        {
+            try
+            {
+                RCDetails json = GetJson(jsonFilePath);
+                if (json == null)
+                    json = new RCDetails();
+                json.searchCriteria = sr;
+                WriteToFile(json);
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
             }
         }
 
@@ -350,22 +323,14 @@ namespace rcListenLibrary
         /// </returns>
         public void ToggleToast(string toastStatus)
         {
-            //set the name of the file path that contains the information of the user
-            string toastFilePath = Directory.GetCurrentDirectory().ToString() + txtFilePath;
-
-            //Write toastStatus to rcToast.txt
             try
             {
-                CheckFileExists(toastFilePath);
-                List<string> sList = ReadFile(toastFilePath);
-                for(int i = 0; i < sList.Count; i++)
-                {
-                    if (sList[i] == "TOAST")
-                        sList.RemoveRange(i, 2);
-                }
-                sList.Add("TOAST");
-                sList.Add(toastStatus);                
-                WriteToFile(toastFilePath, sList, false);
+                RCDetails json = GetJson(jsonFilePath);
+                if (json == null)
+                    json = new RCDetails();
+                    json.toast = toastStatus;
+                    WriteToFile(json);
+                
             }
             catch (Exception ex)
             {
@@ -390,6 +355,32 @@ namespace rcListenLibrary
             catch
             {
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Handles saving of whether or not toast notifications are enabled through the UI
+        /// </summary>
+        /// <returns>
+        ///     <c>true</c> if toast notifications are enabled, otherwise <c>false</c>.
+        /// </returns>
+        public void NewDuplicateResult(List<string> addedDupResultsJson)
+        {
+            try
+            {
+                RCDetails json = GetJson(jsonFilePath);
+                if (json != null)
+                {
+                    List<string> dupResults = json.dupResults;
+                    foreach (string s in addedDupResultsJson)
+                        dupResults.Add(s);
+                    json.dupResults = dupResults;
+                    WriteToFile(json);
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugLog(ex);
             }
         }
     }

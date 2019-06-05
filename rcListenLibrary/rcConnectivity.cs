@@ -19,7 +19,7 @@ namespace rcListenLibrary
     /// </remarks>
     public class rcConnectivity
     {
-        static string txtFilePath = "/rcData.txt";
+        static string jsonFilePath = "/rcData.json";
 
         /// <summary>
         /// Takes a string from the passing method, and uses <see cref="CheckFileExists(string)"/> and <see cref="ReadFile(string)"/> to retrieve
@@ -27,63 +27,48 @@ namespace rcListenLibrary
         /// SmtpClient to the user, informing them of a posted match. 
         /// </summary>
         /// <param name="result">Passed string for notification purposes.</param>
-        public void NotifyUser(string result)
+        public void NotifyUser(string result, string url)
         {
             rcHelper rc = new rcHelper();
+            //Confirms rcData.json exists
+            bool b = File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath);
+            if (b == false)
+                return;
+            //Retrieves json object from file path
+            RCDetails json = rc.GetJson(jsonFilePath);
+            string email = rc.DecodePassword(json.email);
+            string password = rc.DecodePassword(json.ePass);
 
-            //Confirms rcData.txt exists
-            rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + txtFilePath);
-            //Retrieves email credentials from rcData.txt
-            List<string> dataList = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
-            string email = null;
-            string password = null;            
-            if (dataList.Count > 0)
+            //If credentials exist, continue. 
+            if (email != null && password != null)
             {
-                for(int i = 0; i < dataList.Count; i++)
+                //Send details of post to the user in an email.
+                try
                 {
-                    if (dataList[i] == "EMAIL")
-                    {
-                        email = rc.DecodePassword(dataList[i + 1]);
-                        password = rc.DecodePassword(dataList[i + 2]);
-                    }
-                }
+                    //Initialize mail object & client
+                    MailMessage mail = new MailMessage();
+                    SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
 
-                //If credentials exist, continue. 
-                if (email != null && password != null)
+                    //Adds details to mail object
+                    mail.From = new MailAddress(email);
+                    mail.To.Add(email);
+                    mail.Subject = "New Reddit Post!";
+                    mail.Body = "The following post was created " + DateTime.Now.ToShortDateString()
+                        + ":\n\n" + result + "\n\n" + url;
+
+                    //Sets port, credentials, SSL, and sends mail object. 
+                    SmtpServer.Port = 587;
+                    SmtpServer.Credentials = new System.Net.NetworkCredential(email, password);
+                    SmtpServer.EnableSsl = true;
+                    SmtpServer.Send(mail);
+                    Console.WriteLine("mail Sent");
+                    SmtpServer.Dispose();
+                    mail.Dispose();
+                }
+                catch (Exception ex)
                 {
-                    //Send details of post to the user in an email.
-                    try
-                    {
-                        //Initialize mail object & client
-                        MailMessage mail = new MailMessage();
-                        SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
-
-                        //Adds details to mail object
-                        mail.From = new MailAddress(email);
-                        mail.To.Add(email);
-                        mail.Subject = "New Reddit Post!";
-                        mail.Body = "The following post was created " + DateTime.Now.ToShortDateString()
-                            + ":\n\n" + result;
-
-                        //Sets port, credentials, SSL, and sends mail object. 
-                        SmtpServer.Port = 587;
-                        SmtpServer.Credentials = new System.Net.NetworkCredential(email, password);
-                        SmtpServer.EnableSsl = true;
-                        SmtpServer.Send(mail);
-                        Console.WriteLine("mail Sent");
-                        SmtpServer.Dispose();
-                        mail.Dispose();
-                    }
-                    catch (Exception ex)
-                    {
-                        rc.DebugLog(ex);
-                    }
+                    rc.DebugLog(ex);
                 }
-            }
-            else
-            {
-                Exception e = new Exception("Error caught validating email credentials in RedditCrawler service");
-                rc.DebugLog(e);
             }
         }
 
@@ -97,31 +82,33 @@ namespace rcListenLibrary
         /// <returns>
         ///     <param name="=lstResultList">Returns list of titles retrieved from subreddit.</param>
         /// </returns>
-        public List<string> GetPosts(string user, string password, string sub)
+        public Tuple<List<string>, List<string>> GetPosts(string user, string password, string sub)
         {
             rcHelper rc = new rcHelper();
             try
-            {               
+            {
                 //Initialize instance of Reddit class using RedditSharp, then login with passed credentials. 
                 var reddit = new Reddit();
                 var login = reddit.LogIn(user, password);
                 var subreddit = reddit.GetSubreddit(sub);
                 subreddit.Subscribe();
                 List<string> lstResultList = new List<string>();
+                List<string> lstUrl = new List<string>();
                 //Retrieves title of 15 posts, adds it to a fresh List<string>
                 foreach (var post in subreddit.New.Take(15))
                 {
                     lstResultList.Add(post.Title.ToString());
+                    lstUrl.Add(post.Url.ToString());
                 }
                 //Returns list of post titles. 
-                return lstResultList;
+                return Tuple.Create(lstResultList, lstUrl);
             }
             catch (Exception ex)
             {
                 rc.DebugLog(ex);
             }
             return null;
-        }
+        }     
 
         /// <summary>
         /// Indicates whether any network connection is available

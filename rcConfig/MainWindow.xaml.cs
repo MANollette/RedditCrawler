@@ -22,6 +22,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using rcListenLibrary;
 using System.Windows.Controls.Primitives;
+using Newtonsoft.Json;
 
 namespace rcConfig
 {
@@ -30,63 +31,47 @@ namespace rcConfig
     /// </summary>
     public partial class MainWindow : Window
     {
-        static string txtFilePath = "/rcData.txt";
+        static string jsonFilePath = "/rcData.json";
 
         public MainWindow()
         {
             InitializeComponent();
             rcHelper rc = new rcHelper();
+            RCDetails data = new RCDetails();
 
             //Initial code for populating textboxes with existing criteria
             #region populate fields
             try
             {
                 //Toggle toast toggle button based on existing criteria
-                rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + txtFilePath);
-                List<string> dataList = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + txtFilePath);
-                if (dataList.Count > 0)
+                bool b = (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath));
+                if (b == true)
                 {
-                    for (int i = 0; i < dataList.Count; i++)
-                    {
-                        if (dataList[i] == "TOAST")
+                    var datRaw = File.ReadAllText(Directory.GetCurrentDirectory().ToString() + jsonFilePath);
+                    data = JsonConvert.DeserializeObject<RCDetails>(datRaw);
+                    if (data.toast == "yes")
+                        tbtnToast.IsChecked = true;
+                    if (data.sub != null)
+                        txtSubreddit.Text = data.sub;
+                    if (data.email != null)
+                        txtEmail.Text = rc.DecodePassword(data.email);
+                    if (data.ePass != null)
+                        pwdEmail.Password = rc.DecodePassword(data.ePass);
+                    if (data.rLogin != null)
+                        txtRedditLogin.Text = rc.DecodePassword(data.rLogin);
+                    if (data.rPass != null)
+                        pwdReddit.Password = rc.DecodePassword(data.rPass);
+                    if (data.searchCriteria.Count > 0)
+                        foreach (string s in data.searchCriteria)
                         {
-                            if (dataList[i + 1] == "yes")
-                                tbtnToast.IsChecked = true;
+                            if (data.searchCriteria.IndexOf(s) != data.searchCriteria.Count - 1)
+                                rtfSearchTerms.AppendText(s + "\n");
+                            else rtfSearchTerms.AppendText(s);
                         }
-                        if (dataList[i] == "SUBREDDIT")
-                        {
-                            txtSubreddit.Text = dataList[i + 1];
-                        }
-                        if (dataList[i] == "EMAIL")
-                        {
-                            txtEmail.Text = rc.DecodePassword(dataList[i + 1]);
-                            pwdEmail.Password = rc.DecodePassword(dataList[i + 2]);
-                        }
-                        if (dataList[i] == "LOGIN")
-                        {
-                            txtRedditLogin.Text = rc.DecodePassword(dataList[i + 1]);
-                            pwdReddit.Password = rc.DecodePassword(dataList[i + 2]);
-                        }
-                    }
                 }
-
-                //Populate search criteria contents with existing criteria
-                rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
-                if (rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt").Count > 0)
-                {
-                    List<string> lstSearchInput = rc.ReadFile(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
-                    if (lstSearchInput.Count > 0)
-                    {
-                        foreach (string s in lstSearchInput)
-                        {
-                            rtfSearchTerms.AppendText(s + "\n");
-                        }
-                    }
-                }           
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show(ex.Message);
                 rc.DebugLog(ex);
             }
             #endregion
@@ -200,7 +185,7 @@ namespace rcConfig
                     MessageBox.Show("Email credentials accepted & saved");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 rc.DebugLog(ex);
             }
@@ -280,16 +265,16 @@ namespace rcConfig
             {
                 //Initialize all search-based variables.
                 #region variable_Initialization
-                
-                   
+
+
                 TextRange searchCriteria = null;
                 //analyzes entries in search terms rich textbox, confirms there is input present. 
                 var start = rtfSearchTerms.Document.ContentStart;
                 var end = rtfSearchTerms.Document.ContentEnd;
                 int difference = start.GetOffsetToPosition(end);
                 if (difference != 4)
-                {                   
-                    searchCriteria = new TextRange(rtfSearchTerms.Document.ContentStart, rtfSearchTerms.Document.ContentEnd);
+                {
+                    searchCriteria = new TextRange(start, end);
                 }
                 else
                 {
@@ -304,23 +289,22 @@ namespace rcConfig
                 {
                     try
                     {
-                        //Ensures file exists
-                        rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt");
-                        using (StreamWriter sw = new StreamWriter(Directory.GetCurrentDirectory().ToString() + "/rcSearchCriteria.txt", false))
-                        {
-                            sw.Write(searchCriteria.Text);
-                            sw.Flush();
-                            sw.Close();
-                        }
+                        string sl = searchCriteria.Text.ToString();
+                        List<string> scList = sl.Split(new[] { Environment.NewLine }, StringSplitOptions.None).ToList();
+                        foreach (string s in scList)
+                            if (s == "" || s == null)
+                                scList.Remove(s);
+                        rc.NewSearchCriteria(scList);
                     }
                     catch (Exception ex)
                     {
+                        MessageBox.Show(ex.Message);
                         rc.DebugLog(ex);
                     }
-                    MessageBox.Show("Criteria successfully updated. You may now run RedditCrawler");                  
+                    MessageBox.Show("Criteria successfully updated. You may now run RedditCrawler");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
                 rc.DebugLog(ex);
@@ -348,7 +332,7 @@ namespace rcConfig
                     MessageBox.Show("Toast notifications are now disabled");
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 rc.DebugLog(ex);
             }
