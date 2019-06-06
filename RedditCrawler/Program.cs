@@ -24,16 +24,17 @@ namespace RedditCrawler
 {
     class Program
     {
+        //global variables
         static string jsonFilePath = "/rcData.json";
         static string appID = "FightingMongooses.RedditCrawler";
 
         static void Main(string[] args)
         {
-            //Initialize helper methods. 
+            //Initialize helper classes
             rcHelper rc = new rcHelper();
             Program p = new Program();
 
-            //Create shortcut for application for toast notification
+            //Create shortcut for application for toast notification's access to Windows
             try
             {
                 ShortCutCreator.TryCreateShortcut(appID, "RedditCrawler");
@@ -44,29 +45,32 @@ namespace RedditCrawler
             }
 
             //Validates login, logs failures. 
-            bool b = File.Exists((Directory.GetCurrentDirectory().ToString() + jsonFilePath));
             RCDetails json = new RCDetails();
-            if (b == true)
+            if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
             {
                 json = rc.GetJson(jsonFilePath);
             }
             if (json.rLogin == null || json.rPass == null)
             {
-                Exception e = new Exception("Login failed. Please configure your settings in rcConfig.");
-                rc.DebugLog(e);
+                //Throw exception indicating login credentials have not been set. 
+                rc.DebugLog(new Exception("Login failed. Please configure your settings in rcConfig."));
                 System.Environment.Exit(0);
             }
             else
             {
                 try
                 {
+                    //Decode & initialize username and password variables for passing to listen method.
                     string user = rc.DecodePassword(json.rLogin);
                     string password = rc.DecodePassword(json.rPass);
+
+                    //If variables are valid, pass to & run Listen method. 
                     if (user != null && password != null)
                         p.Listen(user, password).Wait();
                     else
                     {
-                        rc.DebugLog(new Exception("Please ensure a valid username and password are configured"));
+                        //Throw exception indicating login credentials are invalid. 
+                        rc.DebugLog(new Exception("Reddit credentials failed. Please check your login and password."));
                         Environment.Exit(0);
                     }
                 }
@@ -83,27 +87,31 @@ namespace RedditCrawler
         /// rcSearchCriteria.txt, and rcSubreddit.txt) and their contents, then retrieves 15 posts using <see cref="GetPosts(string, string, string)"/>
         /// Once these posts have been retrieved, the method checks them against duplicates from rcSearchRecords.txt and matches from rcSearchCriteria.txt,
         /// then uses <see cref="NotifyUser(string)"/> to notify the user of any matches. After this, all variables are cleared, the thread sleeps for 
-        /// 60,000 ticks, and runs again. 
+        /// 180,000 ticks, and runs again. 
         /// </summary>
         /// <param name="user">Reddit username</param>
         /// <param name="password">Reddit password</param>
         private async Task Listen(string user, string password)
         {
+            //Initialize helper classes
             rcHelper rc = new rcHelper();
             rcConnectivity rcon = new rcConnectivity();
             RCDetails json = new RCDetails();
-            bool b = File.Exists((Directory.GetCurrentDirectory().ToString() + jsonFilePath));
-            if (b == true)
+
+            //Retrieve JSON object from local storage
+            if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
             {
                 json = rc.GetJson(jsonFilePath);
             }
+            //If JSON is not found, throw exception indicating it needs to be initialized.
             else
             {
-                Exception ex = new Exception("Please ensure json file exists and can be pulled.");
+                Exception ex = new Exception("Please ensure you have properly configured your information in rcConfig.");
                 rc.DebugLog(ex);
                 Environment.Exit(0);
             }
 
+            //Run remainder of method in a loop every 180,000 ticks. 
             while (true)
             {
                 try
@@ -116,9 +124,10 @@ namespace RedditCrawler
                     {
                         lstDuplicateList = json.dupResults;
                     }
+                    //Throw exception indicating that user needs to input search terms into rcConfig
                     if (lstSearchInput.Count < 1)
                     {
-                        Exception ex = new Exception("You must ensure rcSearchCriteria.txt has search terms.");
+                        Exception ex = new Exception("You must ensure search terms have been set up in rcConfig.");
                         rc.DebugLog(ex);
                         System.Environment.Exit(0);
                     }
@@ -141,21 +150,23 @@ namespace RedditCrawler
                     //Exit environment and log error if any variable check fails
                     if (subEx == false)
                     {
-                        rc.DebugLog(new Exception("Please check your subreddit existence & formatting."));
+                        rc.DebugLog(new Exception("Please check your subreddit existence & formatting in rcConfig."));
                         Environment.Exit(0);
                     }
                     if (emailEx == false)
                     {
-                        rc.DebugLog(new Exception("Please check your email credentials existence & formatting."));
+                        rc.DebugLog(new Exception("Please check your email credentials existence & formatting in rcConfig."));
                         Environment.Exit(0);
                     }
                        
                     #endregion
 
-                    //gets list of 15 most recent posts from designated sub.
+                    //gets list of 15 most recent posts/URLs from designated sub.
                     var getLists = rcon.GetPosts(user, password, sub);
                     List<string> lstResultList = getLists.Item1;
                     List<string> lstUrl = getLists.Item2;
+
+                    //Run lists through the NotificationList method, trimming duplicates and non-matches. 
                     var passedLists = rc.NotificationList(lstResultList, lstUrl, lstSearchInput, lstDuplicateList);
                     List<string> lstPassedList = passedLists.Item1;
                     List<string> lstPassedUrls = passedLists.Item2;
@@ -185,6 +196,7 @@ namespace RedditCrawler
                     lstSearchInput.Clear();                    
                     await Task.Delay(180000);
                 }
+                //Generic unhandled exception catch
                 catch (Exception ex)
                 {
                     rc.DebugLog(ex);
@@ -213,9 +225,9 @@ namespace RedditCrawler
 
             // Create the toast and attach event listeners
             ToastNotification toast = new ToastNotification(toastXml);
-
             ToastEvents events = new ToastEvents();
 
+            //Adds details to event.
             toast.Activated += events.ToastActivated;
             toast.Dismissed += events.ToastDismissed;
             toast.Failed += events.ToastFailed;
@@ -262,7 +274,7 @@ namespace RedditCrawler
         }
 
         /// <summary>
-        /// Local class for handling toast activation, dismissal, & failure
+        /// Local class for handling toast activation, dismissal, & failure in console
         /// </summary>
         class ToastEvents
         {

@@ -22,18 +22,21 @@ namespace rcListenLibrary
         static string jsonFilePath = "/rcData.json";
 
         /// <summary>
-        /// Takes a string from the passing method, and uses <see cref="CheckFileExists(string)"/> and <see cref="ReadFile(string)"/> to retrieve
-        /// saved email credentials. These are then decoded using <see cref="DecodePassword(string)"/> and used to send a MailMessage object using 
-        /// SmtpClient to the user, informing them of a posted match. 
+        /// Takes a string from the passing method, and checks file existence, then uses <see cref="GetJson(string)"/> to retrieve
+        /// saved JSON object. The JSON's email and password attributes are then decoded using <see cref="DecodePassword(string)"/> 
+        /// and used to send a MailMessage object using SmtpClient to the user, informing them of a posted match. 
         /// </summary>
         /// <param name="result">Passed string for notification purposes.</param>
+        /// <param name="url">Passed URL for ease of access</param>
         public void NotifyUser(string result, string url)
         {
+            //Initialize helper class
             rcHelper rc = new rcHelper();
+
             //Confirms rcData.json exists
-            bool b = File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath);
-            if (b == false)
+            if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
                 return;
+
             //Retrieves json object from file path
             RCDetails json = rc.GetJson(jsonFilePath);
             string email = rc.DecodePassword(json.email);
@@ -65,6 +68,7 @@ namespace rcListenLibrary
                     SmtpServer.Dispose();
                     mail.Dispose();
                 }
+                //Generic exception handling
                 catch (Exception ex)
                 {
                     rc.DebugLog(ex);
@@ -74,17 +78,21 @@ namespace rcListenLibrary
 
         /// <summary>
         /// Takes a user name, password, and subreddit from calling method. Uses these to run <see cref="Reddit.GetSubreddit(string).New.Take(15)"/>
-        /// to retrieve posts from the specified subreddit. The titles of these are then passed to <paramref name="lstResultList"/> and returned.
+        /// to retrieve posts from the specified subreddit. The titles and URLs of these are then passed to 
+        /// <paramref name="lstResultList"/> and <paramref name="lstUrl"/> and returned.
         /// </summary>
         /// <param name="user">Passed Reddit username.</param>
         /// <param name="password">Passed Reddit password.</param>
         /// <param name="sub">Passed subreddit in string format.</param>
         /// <returns>
         ///     <param name="=lstResultList">Returns list of titles retrieved from subreddit.</param>
+        ///     <param name="=lstUrl">Returns list of post URLs retrieved from subreddit.</param>
         /// </returns>
         public Tuple<List<string>, List<string>> GetPosts(string user, string password, string sub)
         {
+            //Initialize helper class
             rcHelper rc = new rcHelper();
+
             try
             {
                 //Initialize instance of Reddit class using RedditSharp, then login with passed credentials. 
@@ -92,9 +100,12 @@ namespace rcListenLibrary
                 var login = reddit.LogIn(user, password);
                 var subreddit = reddit.GetSubreddit(sub);
                 subreddit.Subscribe();
+
+                //Initialize lists for later return
                 List<string> lstResultList = new List<string>();
                 List<string> lstUrl = new List<string>();
-                //Retrieves title of 15 posts, adds it to a fresh List<string>
+
+                //Retrieves title and URL of 15 posts, adds them to a lists
                 foreach (var post in subreddit.New.Take(15))
                 {
                     lstResultList.Add(post.Title.ToString());
@@ -103,11 +114,12 @@ namespace rcListenLibrary
                 //Returns list of post titles. 
                 return Tuple.Create(lstResultList, lstUrl);
             }
+            //Generic exception handling
             catch (Exception ex)
             {
                 rc.DebugLog(ex);
+                return null;
             }
-            return null;
         }     
 
         /// <summary>

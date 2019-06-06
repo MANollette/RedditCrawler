@@ -31,11 +31,14 @@ namespace rcConfig
     /// </summary>
     public partial class MainWindow : Window
     {
+        //Global variable initialization
         static string jsonFilePath = "/rcData.json";
 
         public MainWindow()
         {
             InitializeComponent();
+            
+            //Initialize helper classes
             rcHelper rc = new rcHelper();
             RCDetails data = new RCDetails();
 
@@ -43,9 +46,8 @@ namespace rcConfig
             #region populate fields
             try
             {
-                //Toggle toast toggle button based on existing criteria
-                bool b = (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath));
-                if (b == true)
+                //Toggle toast toggle button and field auto-fill based on existing criteria
+                if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
                 {
                     var datRaw = File.ReadAllText(Directory.GetCurrentDirectory().ToString() + jsonFilePath);
                     data = JsonConvert.DeserializeObject<RCDetails>(datRaw);
@@ -64,12 +66,14 @@ namespace rcConfig
                     if (data.searchCriteria.Count > 0)
                         foreach (string s in data.searchCriteria)
                         {
+                            //Ensures no new line is created at end of list
                             if (data.searchCriteria.IndexOf(s) != data.searchCriteria.Count - 1)
                                 rtfSearchTerms.AppendText(s + "\n");
                             else rtfSearchTerms.AppendText(s);
                         }
                 }
             }
+            //Generic exception handling
             catch (Exception ex)
             {
                 rc.DebugLog(ex);
@@ -81,7 +85,7 @@ namespace rcConfig
         #region buttonClicks
 
         /// <summary>
-        /// Confirms contents of subreddit textbox and writes contents to rcSubreddit.txt using <see cref="NewSub(string)"/> if valid. 
+        /// Confirms contents of subreddit textbox and writes contents to JSON object using <see cref="NewSub(string)"/> if valid. 
         /// </summary>
         private void btnSubmitSub_click(object sender, RoutedEventArgs e)
         {
@@ -92,38 +96,30 @@ namespace rcConfig
                 #region variable_Initialization
                 //Initialize subreddit variable
                 string sub = null;
+
                 //Check for valid input in txtSubreddit textbox
-                if (txtSubreddit.Text != null && txtSubreddit.Text.Count() > 2)
+                if (txtSubreddit.Text != null && txtSubreddit.Text.Count() > 3 && txtSubreddit.Text.StartsWith("/r/"))
                 {
-                    //Confirm subreddit correctly includes initial /r/ format
-                    if (txtSubreddit.Text[0] == '/' && txtSubreddit.Text[1].ToString().ToLower() == "r" && txtSubreddit.Text[2] == '/')
-                    {
-                        if (txtSubreddit.Text.Count() > 3)
-                        {
-                            sub = txtSubreddit.Text;
-                        }
-                    }
-                    //If invalid, display error message & return. 
-                    else
-                    {
-                        MessageBox.Show("Please ensure your subreddit begins with '/r/'");
-                        return;
-                    }
+                    sub = txtSubreddit.Text;                    
                 }
+                //Display error message if subreddit textbox is empty or contains improperly formatted text.
                 else
                 {
-                    MessageBox.Show("Please input the subreddit you'd like to monitor.");
+                    MessageBox.Show("Please input the subreddit you'd like to monitor. \nMake sure it begins with \"/r/\"");
                     return;
                 }
                 #endregion
 
-                //Write details of text boxes to rcSubreddit.txt, displaying message if it was accepted.
+                //Write details of text boxes to JSON object, displaying message if it was accepted.
                 if (sub != null)
                 {
                     rc.NewSub(sub);
                     MessageBox.Show("Subreddit accepted");
+                    if (rc.ApplicationReady() == true)
+                        MessageBox.Show("You may now run RedditCrawler!");
                 }
             }
+            //Generic exception handling.
             catch (Exception ex)
             {
                 rc.DebugLog(ex);
@@ -131,44 +127,40 @@ namespace rcConfig
         }
 
         /// <summary>
-        /// Confirms contents of email and email password boxes and encrypts/writes contents to rcEmail.txt using <see cref="NewEmail(string, string)"/> if valid. 
+        /// Confirms contents of email and email password boxes and encrypts/writes contents to JSON object using <see cref="NewEmail(string, string)"/> if valid. 
         /// </summary>
         private void btnSubmitEmail_click(object sender, RoutedEventArgs e)
         {
+            //Initialize helper class
             rcHelper rc = new rcHelper();
+
             try
             {
                 //Initialize all variables from email and ePass fields.
                 #region variable_Initialization
-                //Initialize email variable
+                //Initialize email and password variables
                 string email = null;
+                string ePass = null;
+
                 //Check for valid input in txtEmail textbox
-                if (txtEmail.Text != null)
+                if (txtEmail.Text != null && rc.IsEmailValid(txtEmail.Text) == true)
                 {
-                    //Confirm valid email format
-                    if (rc.IsEmailValid(txtEmail.Text) == true)
-                    {
-                        email = txtEmail.Text;
-                    }
-                    //If invalid, display error & return
-                    else
-                    {
-                        MessageBox.Show("Please enter a valid email address");
-                        return;
-                    }
+                    email = txtEmail.Text;               
+                    
                 }
+                //If invalid, display error & return
                 else
                 {
-                    MessageBox.Show("Please enter an email address");
+                    MessageBox.Show("Please enter a valid email address");
                     return;
                 }
 
-                //Initialize email password variable.
-                string ePass = null;
+                //Ensure password exists
                 if (pwdEmail.Password.Count() > 0)
                 {
                     ePass = pwdEmail.Password;
                 }
+                //If null or empty, display error & return
                 else
                 {
                     MessageBox.Show("Please input your email password.");
@@ -176,15 +168,21 @@ namespace rcConfig
                 }
                 #endregion
 
+                //Tests email credentials & writes them to JSON object if valid. 
                 if (email != null && ePass != null)
-                {
-                    //Tests email credentials & writes them to file if valid. 
+                {                  
                     bool eLog = rc.NewEmail(email, ePass);
                     if (eLog == false)
+                    {
+                        MessageBox.Show("Your email address or password was incorrect.");
                         return;
+                    }
                     MessageBox.Show("Email credentials accepted & saved");
+                    if (rc.ApplicationReady() == true)
+                        MessageBox.Show("You may now run RedditCrawler!");
                 }
             }
+            //Generic exception handling
             catch (Exception ex)
             {
                 rc.DebugLog(ex);
@@ -192,17 +190,17 @@ namespace rcConfig
         }
 
         /// <summary>
-        /// Confirms contents of login & password boxes and encrypts/writes contents to rcLogin.txt using <see cref="NewLogin(string, string)"/> if valid. 
+        /// Confirms contents of login & password boxes and encrypts/writes contents to JSON object using <see cref="NewLogin(string, string)"/> if valid. 
         /// </summary>
         private void btnSubmitLogin_click(object sender, RoutedEventArgs e)
         {
+            //Initialize helper class
             rcHelper rc = new rcHelper();
 
             try
             {
-                //Confirm an internet connection is present
-                bool testNetwork = rcConnectivity.IsNetworkAvailable(0);
-                if (testNetwork == false)
+                //Confirm an internet connection is present, logging error & returning if not.
+                if (rcConnectivity.IsNetworkAvailable(0) == false)
                 {
                     MessageBox.Show("Please check your internet connection.");
                     return;
@@ -210,8 +208,10 @@ namespace rcConfig
 
                 //Initialize variables from login and password fields, confirming formats
                 #region variable_Initialization
-                //Initialize reddit username as rUser variable. 
+                //Initialize reddit username and password as rUser and rPass variables. 
                 string rUser = null;
+                string rPass = null;
+
                 //Confirm valid entry in txtRedditLogin textbox
                 if (txtRedditLogin.Text != null && txtRedditLogin.Text.Count() > 2)
                 {
@@ -224,12 +224,12 @@ namespace rcConfig
                     return;
                 }
 
-                //Initialize reddit password variable
-                string rPass = null;
+                //Confirm valid password entry
                 if (pwdReddit.Password.Count() > 0)
                 {
                     rPass = pwdReddit.Password;
                 }
+                //If invalid entry, display error & return
                 else
                 {
                     MessageBox.Show("Please input your reddit password.");
@@ -237,16 +237,20 @@ namespace rcConfig
                 }
                 #endregion
 
+                //Confirm user and password variables aren't null, then saves them to JSON object
                 if (rUser != null && rPass != null)
                 {
-                    //Tests login credentials
-                    bool rLog = rc.NewLogin(rUser, rPass);
-                    if (rLog == false)
-                        return;
-                    MessageBox.Show("Login credentials accepted & saved");
+                    if (rc.NewLogin(rUser, rPass) == false)
+                        MessageBox.Show("Login failed. Your username or password is incorrect.");
+                    else
+                    {
+                        MessageBox.Show("Login credentials accepted & saved");
+                        if (rc.ApplicationReady() == true)
+                            MessageBox.Show("You may now run RedditCrawler!");
+                    }
                 }
-
             }
+            //Generic exception handling
             catch (Exception ex)
             {
                 rc.DebugLog(ex);
@@ -254,28 +258,30 @@ namespace rcConfig
         }
 
         /// <summary>
-        /// Confirms contents of search criteria box and writes contents to rcSearchCriteria.txt 
-        /// using <see cref="WriteTRToFile(string, TextRange, bool)"/> if valid. 
+        /// Confirms contents of search criteria box and writes contents 
+        /// to JSON object after conversion to a list
         /// </summary>
         private void btnSubmitSearch_Click(object sender, RoutedEventArgs e)
         {
+            //Initialize helper class
             rcHelper rc = new rcHelper();
 
             try
             {
                 //Initialize all search-based variables.
                 #region variable_Initialization
-
-
+                //Initialize TextRange
                 TextRange searchCriteria = null;
+
                 //analyzes entries in search terms rich textbox, confirms there is input present. 
                 var start = rtfSearchTerms.Document.ContentStart;
                 var end = rtfSearchTerms.Document.ContentEnd;
                 int difference = start.GetOffsetToPosition(end);
-                if (difference != 4)
+                if (difference > 1)
                 {
                     searchCriteria = new TextRange(start, end);
                 }
+                //If input is not present or is too small, user is directed to input terms in the RTF box
                 else
                 {
                     MessageBox.Show("Please input the terms you'd like to listen for. \nBe sure to put each term on a new line");
@@ -284,38 +290,51 @@ namespace rcConfig
 
                 #endregion
 
-                //Checks that each created variable is not null
+                //Only continues if searchCriteria is not null
                 if (searchCriteria != null)
                 {
                     try
                     {
+                        //Retrieves text from searchCriteria TextRange as a string
                         string sl = searchCriteria.Text.ToString();
+
+                        //Separates searchCriteria string sl into a list of strings separated by line breaks. 
                         List<string> scList = sl.Split(new[] { Environment.NewLine }, StringSplitOptions.None).ToList();
-                        foreach (string s in scList)
-                            if (s == "" || s == null)
-                                scList.Remove(s);
+
+                        //Removes empty and NewLine entries from list
+                        for (int i = 0; i < scList.Count; i++)
+                            if (scList[i] == "" || scList[i] == null || scList[i] == Environment.NewLine)
+                                scList.RemoveAt(i);
+
+                        //Runs filtered list into NewSearchCriteria method.
                         rc.NewSearchCriteria(scList);
                     }
+                    //Generic exception handling.
                     catch (Exception ex)
                     {
                         MessageBox.Show(ex.Message);
                         rc.DebugLog(ex);
+                        Environment.Exit(1);
                     }
-                    MessageBox.Show("Criteria successfully updated. You may now run RedditCrawler");
+                    MessageBox.Show("Criteria successfully updated.");
+                    if (rc.ApplicationReady() == true)
+                        MessageBox.Show("You may now run RedditCrawler!");
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
                 rc.DebugLog(ex);
+                Environment.Exit(1);
             }
         }
 
         /// <summary>
-        /// Saves status of toast notifications.
+        /// Saves status of toast notifications to JSON object.
         /// </summary>
         private void tbtnToggleToast_Click(object sender, RoutedEventArgs e)
         {
+            //Initialize helper class
             rcHelper rc = new rcHelper();
 
             //Handles toggling of toast notifications through rcHelper ToggleToast method.
@@ -332,11 +351,15 @@ namespace rcConfig
                     MessageBox.Show("Toast notifications are now disabled");
                 }
             }
+            //Generic exception handling
             catch (Exception ex)
             {
                 rc.DebugLog(ex);
+                Environment.Exit(1);
             }
         }
         #endregion
+
+        
     }
 }

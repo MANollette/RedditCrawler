@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace rcListenLibrary
 {
+    /// <summary>
+    /// Class RCDetails exists to assist in the creation, modification, and preservation of 
+    /// the JSON object this application's Listen method uses to run. 
+    /// </summary>
     public class RCDetails
     {
         public string rLogin { get; set; }
