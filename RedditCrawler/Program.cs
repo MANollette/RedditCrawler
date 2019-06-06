@@ -111,7 +111,7 @@ namespace RedditCrawler
                 Environment.Exit(0);
             }
 
-            //Run remainder of method in a loop every 180,000 ticks. 
+            //Run remainder of method in a loop every 180,000 ticks..
             while (true)
             {
                 try
