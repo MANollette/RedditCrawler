@@ -34,8 +34,11 @@ namespace rcListenLibrary
             rcHelper rc = new rcHelper();
 
             //Confirms rcData.json exists
-            if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
-                return;
+            if (!File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
+            {
+                rc.DebugLog(new Exception("JSON has not been created"));
+                Environment.Exit(0);
+            }
 
             //Retrieves json object from file path
             RCDetails json = rc.GetJson(jsonFilePath);
