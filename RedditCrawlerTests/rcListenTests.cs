@@ -22,28 +22,15 @@ namespace RedditCrawlerTests
         }
 
         [TestMethod]
-        public void TestFileCreationAndExistence()
+        public void TestJsonCreationAndExistence()
         {
             rcHelper rc = new rcHelper();
-            rc.CheckFileExists(Directory.GetCurrentDirectory().ToString() + "/test.txt");
-            bool b = File.Exists(Directory.GetCurrentDirectory().ToString() + "/test.txt");
-            File.Delete(Directory.GetCurrentDirectory().ToString() + "/test.txt");
+            List<string> sc = new List<string>();
+            RCDetails rcd = new RCDetails("rLog", "rPass", "email", "ePass", "sub", "toast", sc, sc);
+            rc.WriteToFile(rcd);
+            bool b = File.Exists(Directory.GetCurrentDirectory().ToString() + "/rcData.json");
+            File.Delete(Directory.GetCurrentDirectory().ToString() + "/rcData.json");
             Assert.AreEqual(b, true);            
-        }
-
-        [TestMethod]
-        public void TestFileReadWrite()
-        {
-            rcHelper rc = new rcHelper();
-            List<string> sl = new List<string>();
-            List<string> sl2 = new List<string>();
-            sl.Add("Test text");
-            string filePath = Directory.GetCurrentDirectory().ToString() + "/test.txt";
-            rc.CheckFileExists(filePath);
-            rc.WriteToFile(filePath, sl, false);
-            sl2 = rc.ReadFile(filePath);
-            Assert.AreEqual(sl[0], sl2[0]);
-            File.Delete(filePath);
         }
 
         [TestMethod]
@@ -76,8 +63,13 @@ namespace RedditCrawlerTests
         public void TestRedditPostRetrieval()
         {
             rcConnectivity rcc = new rcConnectivity();
-            List<string> sl = rcc.GetPosts("username", "password", "/r/miniswap");
-            Assert.IsNotNull(sl);
+            var getLists = rcc.GetPosts("username", "password", "/r/miniswap");
+            List<string> lstResultList = getLists.Item1;
+            List<string> lstUrl = getLists.Item2;
+            bool b = false;
+            if (lstResultList != null && lstUrl != null)
+                b = true;
+            Assert.IsTrue(b);
         }
     }
 }
