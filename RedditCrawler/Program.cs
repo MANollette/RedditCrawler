@@ -34,6 +34,12 @@ namespace RedditCrawler
             rcHelper rc = new rcHelper();
             Program p = new Program();
 
+            //Set current directory to match up with rcConfig's
+            string s = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\RedditCrawler";
+            if (!Directory.Exists(s))
+                Directory.CreateDirectory(s);
+            Directory.SetCurrentDirectory(s);
+
             //Create shortcut for application for toast notification's access to Windows
             try
             {

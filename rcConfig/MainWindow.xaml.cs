@@ -37,7 +37,13 @@ namespace rcConfig
         public MainWindow()
         {
             InitializeComponent();
-            
+
+            //Set working directory to match RedditCrawler's
+            string s = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\RedditCrawler";
+            if (!Directory.Exists(s))
+                Directory.CreateDirectory(s);
+            Directory.SetCurrentDirectory(s);
+
             //Initialize helper classes
             rcHelper rc = new rcHelper();
             RCDetails data = new RCDetails();
@@ -64,12 +70,12 @@ namespace rcConfig
                     if (data.rPass != null)
                         pwdReddit.Password = rc.DecodePassword(data.rPass);
                     if (data.searchCriteria.Count > 0)
-                        foreach (string s in data.searchCriteria)
+                        foreach (string s2 in data.searchCriteria)
                         {
                             //Ensures no new line is created at end of list
-                            if (data.searchCriteria.IndexOf(s) != data.searchCriteria.Count - 1)
-                                rtfSearchTerms.AppendText(s + "\n");
-                            else rtfSearchTerms.AppendText(s);
+                            if (data.searchCriteria.IndexOf(s2) != data.searchCriteria.Count - 1)
+                                rtfSearchTerms.AppendText(s2 + "\n");
+                            else rtfSearchTerms.AppendText(s2);
                         }
                 }
             }
