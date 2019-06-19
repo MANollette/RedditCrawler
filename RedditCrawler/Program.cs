@@ -179,17 +179,25 @@ namespace RedditCrawler
 
                     //Now that the list has been trimmed, notify user of all results
                     if (lstPassedList.Count > 0)
-                    {                       
+                    {
+                        if (lstPassedList.Count() == 0)
+                            Console.WriteLine("No new posts were retrieved.");
+                        else
+                        {
+                            foreach (string s in lstPassedList)
+                            {
+                                Console.WriteLine("Sent: " + s);
+                                lstDuplicateList.Add(s);
+                            }
+                            rcon.NotifyUser(lstPassedList, lstPassedUrls);
+                        }
                         for (int i = 0; i < lstPassedList.Count(); i++)
                         {
-                            Console.WriteLine("Sent: " + lstPassedList[i]);
-                            rcon.NotifyUser(lstPassedList[i], lstPassedUrls[i]);
                             if (toastStatus == true)
                             {
                                 ShowTextToast(appID, "New Reddit Post!" + lstPassedList[i], lstPassedUrls[i]);
-                            }
-                            lstDuplicateList.Add(lstPassedList[i]);
-                            await (Task.Delay(5000));
+                                await (Task.Delay(5000));
+                            }                       
                         }
                         json.dupResults = lstDuplicateList;
                         rc.WriteToFile(json);

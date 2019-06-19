@@ -28,7 +28,7 @@ namespace rcListenLibrary
         /// </summary>
         /// <param name="result">Passed string for notification purposes.</param>
         /// <param name="url">Passed URL for ease of access</param>
-        public void NotifyUser(string result, string url)
+        public void NotifyUser(List<string> result, List<string> url)
         {
             //Initialize helper class
             rcHelper rc = new rcHelper();
@@ -56,12 +56,16 @@ namespace rcListenLibrary
                     SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
 
                     //Adds details to mail object
+                    StringBuilder strMailContent = new StringBuilder();
                     mail.From = new MailAddress(email);
                     mail.To.Add(email);
-                    mail.Subject = "New Reddit Post!";
-                    mail.Body = "The following post was created " + DateTime.Now.ToShortDateString()
-                        + ":\n\n" + result + "\n\n" + url;
-
+                    mail.Subject = "New Reddit Post!";                   
+                    for(int i = 0; i < result.Count(); i++)
+                    {
+                        strMailContent.Append(result[i] + "\n" + url[i] + "\n\n");
+                    }
+                    mail.Body = "The following posts were created " + DateTime.Now.ToShortDateString()
+                        + ":\n\n" + strMailContent;
                     //Sets port, credentials, SSL, and sends mail object. 
                     SmtpServer.Port = 587;
                     SmtpServer.Credentials = new System.Net.NetworkCredential(email, password);
