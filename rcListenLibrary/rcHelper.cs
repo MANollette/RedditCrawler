@@ -247,10 +247,6 @@ namespace rcListenLibrary
                 var reddit = new Reddit();
                 var login = reddit.LogIn(user, password);
 
-                //Encode the reddit credentials
-                json.rLogin = EncodePassword(user);
-                json.rPass = EncodePassword(password);
-
                 //Write credentials to JSON file. 
                 WriteToFile(json);
                 return true;
@@ -426,7 +422,7 @@ namespace rcListenLibrary
                 return false;
 
             //If all fields of RCDetails class are valid, return true
-            else if (json.email != null && json.ePass != null && json.rLogin != null && json.rPass != null && json.sub != null && json.searchCriteria != null)
+            else if (json.email != null && json.ePass != null && json.sub != null && json.searchCriteria != null)
                 return true;
 
             //Return false by default

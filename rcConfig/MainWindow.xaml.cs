@@ -65,10 +65,6 @@ namespace rcConfig
                         txtEmail.Text = rc.DecodePassword(data.email);
                     if (data.ePass != null)
                         pwdEmail.Password = rc.DecodePassword(data.ePass);
-                    if (data.rLogin != null)
-                        txtRedditLogin.Text = rc.DecodePassword(data.rLogin);
-                    if (data.rPass != null)
-                        pwdReddit.Password = rc.DecodePassword(data.rPass);
                     if (data.searchCriteria.Count > 0)
                         foreach (string s2 in data.searchCriteria)
                         {
@@ -186,74 +182,6 @@ namespace rcConfig
                     MessageBox.Show("Email credentials accepted & saved");
                     if (rc.ApplicationReady() == true)
                         MessageBox.Show("You may now run RedditCrawler!");
-                }
-            }
-            //Generic exception handling
-            catch (Exception ex)
-            {
-                rc.DebugLog(ex);
-            }
-        }
-
-        /// <summary>
-        /// Confirms contents of login & password boxes and encrypts/writes contents to JSON object using <see cref="NewLogin(string, string)"/> if valid. 
-        /// </summary>
-        private void btnSubmitLogin_click(object sender, RoutedEventArgs e)
-        {
-            //Initialize helper class
-            rcHelper rc = new rcHelper();
-
-            try
-            {
-                //Confirm an internet connection is present, logging error & returning if not.
-                if (rcConnectivity.IsNetworkAvailable(0) == false)
-                {
-                    MessageBox.Show("Please check your internet connection.");
-                    return;
-                }
-
-                //Initialize variables from login and password fields, confirming formats
-                #region variable_Initialization
-                //Initialize reddit username and password as rUser and rPass variables. 
-                string rUser = null;
-                string rPass = null;
-
-                //Confirm valid entry in txtRedditLogin textbox
-                if (txtRedditLogin.Text != null && txtRedditLogin.Text.Count() > 2)
-                {
-                    rUser = txtRedditLogin.Text;
-                }
-                //If invalid entry, display error & return
-                else
-                {
-                    MessageBox.Show("Please input a valid reddit username");
-                    return;
-                }
-
-                //Confirm valid password entry
-                if (pwdReddit.Password.Count() > 0)
-                {
-                    rPass = pwdReddit.Password;
-                }
-                //If invalid entry, display error & return
-                else
-                {
-                    MessageBox.Show("Please input your reddit password.");
-                    return;
-                }
-                #endregion
-
-                //Confirm user and password variables aren't null, then saves them to JSON object
-                if (rUser != null && rPass != null)
-                {
-                    if (rc.NewLogin(rUser, rPass) == false)
-                        MessageBox.Show("Login failed. Your username or password is incorrect.");
-                    else
-                    {
-                        MessageBox.Show("Login credentials accepted & saved");
-                        if (rc.ApplicationReady() == true)
-                            MessageBox.Show("You may now run RedditCrawler!");
-                    }
                 }
             }
             //Generic exception handling

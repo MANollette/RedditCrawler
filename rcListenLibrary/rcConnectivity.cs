@@ -95,7 +95,7 @@ namespace rcListenLibrary
         ///     <param name="=lstResultList">Returns list of titles retrieved from subreddit.</param>
         ///     <param name="=lstUrl">Returns list of post URLs retrieved from subreddit.</param>
         /// </returns>
-        public Tuple<List<string>, List<string>> GetPosts(string user, string password, string sub)
+        public Tuple<List<string>, List<string>> GetPosts(string sub)
         {
             //Initialize helper class
             rcHelper rc = new rcHelper();
@@ -104,16 +104,15 @@ namespace rcListenLibrary
             {
                 //Initialize instance of Reddit class using RedditSharp, then login with passed credentials. 
                 var reddit = new Reddit();
-                var login = reddit.LogIn(user, password);
                 var subreddit = reddit.GetSubreddit(sub);
-                subreddit.Subscribe();
+                var posts = subreddit.Posts.GetListing(15);
 
                 //Initialize lists for later return
                 List<string> lstResultList = new List<string>();
                 List<string> lstUrl = new List<string>();
 
                 //Retrieves title and URL of 15 posts, adds them to a lists
-                foreach (var post in subreddit.New.Take(15))
+                foreach (var post in posts)
                 {
                     lstResultList.Add(post.Title.ToString());
                     lstUrl.Add(post.Url.ToString());

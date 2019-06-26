@@ -49,55 +49,30 @@ namespace RedditCrawler
             {
                 rc.DebugLog(ex);
             }
-
             //Validates login, logs failures. 
             RCDetails json = new RCDetails();
             if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
             {
                 json = rc.GetJson(jsonFilePath);
             }
-            if (json.rLogin == null || json.rPass == null)
+            try
             {
-                //Throw exception indicating login credentials have not been set. 
-                rc.DebugLog(new Exception("Login failed. Please configure your settings in rcConfig."));
-                System.Environment.Exit(0);
+                p.Listen().Wait();
             }
-            else
+            catch (Exception ex)
             {
-                try
-                {
-                    //Decode & initialize username and password variables for passing to listen method.
-                    string user = rc.DecodePassword(json.rLogin);
-                    string password = rc.DecodePassword(json.rPass);
-
-                    //If variables are valid, pass to & run Listen method. 
-                    if (user != null && password != null)
-                        p.Listen(user, password).Wait();
-                    else
-                    {
-                        //Throw exception indicating login credentials are invalid. 
-                        rc.DebugLog(new Exception("Reddit credentials failed. Please check your login and password."));
-                        Environment.Exit(0);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    rc.DebugLog(ex);
-                }
+                rc.DebugLog(ex);
             }
 
         }
 
         /// <summary>
-        /// Takes user reddit user name and password as input, confirms existence of all relevant text files (rcEmail.txt, rcLogin.txt, 
-        /// rcSearchCriteria.txt, and rcSubreddit.txt) and their contents, then retrieves 15 posts using <see cref="GetPosts(string, string, string)"/>
-        /// Once these posts have been retrieved, the method checks them against duplicates from rcSearchRecords.txt and matches from rcSearchCriteria.txt,
+        /// Takes user reddit user name and password as input, confirms existence of all relevant JSON contents, then retrieves 15 posts using <see cref="GetPosts(string)"/>
+        /// Once these posts have been retrieved, the method checks them against duplicates and matches from the JSON as well,
         /// then uses <see cref="NotifyUser(string)"/> to notify the user of any matches. After this, all variables are cleared, the thread sleeps for 
         /// 180,000 ticks, and runs again. 
         /// </summary>
-        /// <param name="user">Reddit username</param>
-        /// <param name="password">Reddit password</param>
-        private async Task Listen(string user, string password)
+        private async Task Listen()
         {
             //Initialize helper classes
             rcHelper rc = new rcHelper();
@@ -168,7 +143,7 @@ namespace RedditCrawler
                     #endregion
 
                     //gets list of 15 most recent posts/URLs from designated sub.
-                    var getLists = rcon.GetPosts(user, password, sub);
+                    var getLists = rcon.GetPosts(sub);
                     List<string> lstResultList = getLists.Item1;
                     List<string> lstUrl = getLists.Item2;
 
