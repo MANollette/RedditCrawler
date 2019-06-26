@@ -186,7 +186,7 @@ namespace rcListenLibrary
             //Initialize filepath
             string filePath = Directory.GetCurrentDirectory().ToString() + "/rcDebugLog.txt";
 
-            //Initialize error details for writing to rcErrorLog.txt
+            //Initialize error details for writing to rcDebugLog.txt
             string s = "Error occurred: " + DateTime.Now.ToShortDateString() + "\nSource: " + e.Source + "\nStack trace: " + e.StackTrace
                 + "\nTarget site: " + e.TargetSite + "\nData: " + e.Data + "\nMessage: " + e.Message + "\n\n";
 
