@@ -39,7 +39,7 @@ namespace rcConfig
             InitializeComponent();
 
             //Set working directory to match RedditCrawler's
-            string s = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\RedditCrawler";
+            string s = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\RedditCrawler");
             if (!Directory.Exists(s))
                 Directory.CreateDirectory(s);
             Directory.SetCurrentDirectory(s);
@@ -53,9 +53,9 @@ namespace rcConfig
             try
             {
                 //Toggle toast toggle button and field auto-fill based on existing criteria
-                if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
+                if (File.Exists(System.IO.Path.Combine(Directory.GetCurrentDirectory().ToString() + jsonFilePath)))
                 {
-                    var datRaw = File.ReadAllText(Directory.GetCurrentDirectory().ToString() + jsonFilePath);
+                    var datRaw = File.ReadAllText(System.IO.Path.Combine(Directory.GetCurrentDirectory().ToString() + jsonFilePath));
                     data = JsonConvert.DeserializeObject<RCDetails>(datRaw);
                     if (data.toast == "yes")
                         tbtnToast.IsChecked = true;
@@ -292,8 +292,23 @@ namespace rcConfig
                 Environment.Exit(1);
             }
         }
+
+        /// <summary>
+        /// Removes email from JSON object to disable email notifications
+        /// </summary>
+        private void btnDisableEmail_Click(object sender, RoutedEventArgs e)
+        {
+            rcHelper rc = new rcHelper();
+            RCDetails json = rc.GetJson(jsonFilePath);
+
+            json.email = null;
+            json.ePass = null;
+            rc.WriteToFile(json);
+
+            MessageBox.Show("Your email has been removed. \nYou will only receive toast notifications for new posts (if enabled)");
+        }
         #endregion
 
-        
+
     }
 }

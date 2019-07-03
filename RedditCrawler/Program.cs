@@ -51,7 +51,7 @@ namespace RedditCrawler
             }
             //Validates login, logs failures. 
             RCDetails json = new RCDetails();
-            if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
+            if (File.Exists(Path.Combine(Directory.GetCurrentDirectory().ToString() + jsonFilePath)))
             {
                 json = rc.GetJson(jsonFilePath);
             }
@@ -80,7 +80,7 @@ namespace RedditCrawler
             RCDetails json = new RCDetails();
 
             //Retrieve JSON object from local storage
-            if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
+            if (File.Exists(Path.Combine(Directory.GetCurrentDirectory().ToString() + jsonFilePath)))
             {
                 json = rc.GetJson(jsonFilePath);
             }
@@ -134,11 +134,6 @@ namespace RedditCrawler
                         rc.DebugLog(new Exception("Please check your subreddit existence & formatting in rcConfig."));
                         Environment.Exit(0);
                     }
-                    if (emailEx == false)
-                    {
-                        rc.DebugLog(new Exception("Please check your email credentials existence & formatting in rcConfig."));
-                        Environment.Exit(0);
-                    }
                        
                     #endregion
 
@@ -164,14 +159,15 @@ namespace RedditCrawler
                                 Console.WriteLine("Sent: " + s);
                                 lstDuplicateList.Add(s);
                             }
-                            rcon.NotifyUser(lstPassedList, lstPassedUrls);
+                            if (emailEx == true)
+                                rcon.NotifyUser(lstPassedList, lstPassedUrls);
                         }
                         for (int i = 0; i < lstPassedList.Count(); i++)
                         {
                             if (toastStatus == true)
                             {
                                 ShowTextToast(appID, "New Reddit Post!" + lstPassedList[i], lstPassedUrls[i]);
-                                await (Task.Delay(5000));
+                                await (Task.Delay(10000));
                             }                       
                         }
                         json.dupResults = lstDuplicateList;

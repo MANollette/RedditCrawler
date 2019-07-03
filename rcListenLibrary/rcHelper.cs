@@ -86,10 +86,10 @@ namespace rcListenLibrary
             try
             {
                 //Confirms file exists
-                if (File.Exists(Directory.GetCurrentDirectory().ToString() + filePath))
+                if (File.Exists(Path.Combine(Directory.GetCurrentDirectory().ToString() + jsonFilePath)))
                 {
                     //Initialize json variable to a string, then deserialize it into an instance of RCDetails
-                    var json = File.ReadAllText(Directory.GetCurrentDirectory().ToString() + filePath);
+                    var json = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory().ToString() + filePath));
                     RCDetails parsedDetails = JsonConvert.DeserializeObject<RCDetails>(json);
 
                     //Return deserialized JSON
@@ -184,7 +184,7 @@ namespace rcListenLibrary
         public void DebugLog(Exception e)
         {
             //Initialize filepath
-            string filePath = Directory.GetCurrentDirectory().ToString() + "/rcDebugLog.txt";
+            string filePath = Path.Combine(Directory.GetCurrentDirectory().ToString() + "/rcDebugLog.txt");
 
             //Initialize error details for writing to rcDebugLog.txt
             string s = "Error occurred: " + DateTime.Now.ToShortDateString() + "\nSource: " + e.Source + "\nStack trace: " + e.StackTrace
@@ -213,11 +213,11 @@ namespace rcListenLibrary
             string JSONresult = JsonConvert.SerializeObject(rcd, Formatting.Indented);
 
             //Remove old JSON object
-            if (File.Exists(Directory.GetCurrentDirectory().ToString() + jsonFilePath))
-                File.Delete(Directory.GetCurrentDirectory().ToString() + jsonFilePath);
+            if (File.Exists(Path.Combine(Directory.GetCurrentDirectory().ToString() + jsonFilePath)))
+                File.Delete(Path.Combine(Directory.GetCurrentDirectory().ToString() + jsonFilePath));
 
             //Create new JSON object with updated details
-            File.WriteAllText(Directory.GetCurrentDirectory().ToString() + jsonFilePath, JSONresult);
+            File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory().ToString() + jsonFilePath), JSONresult);
         }
 
         /// <summary>

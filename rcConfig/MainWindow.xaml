@@ -86,5 +86,7 @@
         <ToggleButton 
         Content="Toast Notifications" FontSize="16" Click="tbtnToggleToast_Click" Name="tbtnToast"
             Style="{StaticResource TBStyle1}" Margin="10,234,583,153"/>
+        <Button x:Name="btnDisableEmail" Content="Disable Email Notifications
+" FontSize="14" HorizontalAlignment="Left" Margin="28,364,0,0" VerticalAlignment="Top" Width="172" Click="btnDisableEmail_Click"/>
     </Grid>
 </Window>
