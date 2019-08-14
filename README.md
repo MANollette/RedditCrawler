@@ -1,7 +1,7 @@
-<p align="center">
+
   ![Logo](https://github.com/MANollette/RedditCrawler/tree/master/Raw/Images/Logo.png)
   <img src="https://github.com/MANollette/RedditCrawler/tree/master/Raw/Images/Logo.png"/>
-</p>
+
 
 <p align="center">
   <strong>This is RedditCrawler, a simple tool for interfacing with the Reddit API and monitoring posts there. </strong>
