@@ -1,5 +1,5 @@
 <p align="center">
-  ![Logo](https://github.com/MANollette/RedditCrawler/tree/master/Raw/Images/Logo.png)
+  <img src="https://github.com/MANollette/RedditCrawler/tree/master/Raw/Images/Logo.png"/>
 </p>
 
 
