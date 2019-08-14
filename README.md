@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/MANollette/RedditCrawler/tree/master/Raw/Images/Logo.png"/>
+  <img src="RedditCrawler/tree/master/Raw/Images/Logo.png"/>
 </p>
 
 
